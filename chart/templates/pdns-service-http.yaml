@@ -1,0 +1,21 @@
+{{- if .Values.pdns.httpService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.pdns.httpService.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}-http
+  labels:
+    {{- include "pdns.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.pdns.httpService.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
+{{- end }}

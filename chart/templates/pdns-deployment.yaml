@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.deploymentAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}
+  labels:
+    {{- include "pdns.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "pdns.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "pdns.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: pdns
+          image: "{{ .Values.pdns.repository }}:{{ .Values.pdns.tag }}"
+          imagePullPolicy: {{ .Values.pdns.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+              - NET_BIND_SERVICE
+              drop:
+              - all
+          resources:
+            {{- toYaml .Values.pdns.resources | nindent 12 }}
+          {{- if or .Values.pdns.httpService.enabled (or .Values.pdns.udpService.enabled .Values.pdns.tcpService.enabled) }}
+          ports:
+          {{- if .Values.pdns.httpService.enabled }}
+          - containerPort: {{ .Values.pdns.httpService.port }}
+            name: http
+            protocol: TCP
+          {{- end }}
+          {{- if .Values.pdns.udpService.enabled }}
+          - containerPort: {{ .Values.pdns.udpService.port }}
+            name: dns-udp
+            protocol: UDP
+          {{- end }}
+          {{- if .Values.pdns.tcpService.enabled }}
+          - containerPort: {{ .Values.pdns.tcpService.port }}
+            name: dns-tcp
+            protocol: TCP
+          {{- end }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /etc/pdns
+              name: config
+            - mountPath: /zones
+              name: zones
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "pdns.fullname" . }}-config
+        - name: zones
+          configMap:
+            name: {{ include "pdns.fullname" . }}-zones

@@ -1,0 +1,70 @@
+# Default values for dns.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+externalDNS:
+  extraConfig: 
+  # EXTERNAL_DNS_LOG_LEVEL: debug
+    EXTERNAL_DNS_REGISTRY: txt
+    EXTERNAL_DNS_TXT_OWNER_ID: kang
+    EXTERNAL_DNS_TXT_PREFIX: edns-managed.
+    EXTERNAL_DNS_TXT_WILDCARD_REPLACEMENT: wildcard
+
+pdns:
+  config:
+    apiKey: HeRe-COMeS-A-NeW-CHALLeNGeR
+
+  # extraConfig:
+  #   #               Backup dns @ freedns.afraid.org
+  #   allow-axfr-ips: 69.65.50.192/32,69.65.50.223/32
+
+  udpService:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: ns1.kangmak.es,ns2.kangmak.es,ns1.animio.dev,ns2.animio.dev,ns1.miputa.casa,ns2.miputa.casa
+      external-dns.alpha.kubernetes.io/ttl: "300"
+      metallb.universe.tf/address-pool: kang
+      metallb.universe.tf/allow-shared-ip: sharethisip-itskang
+
+  tcpService:
+    annotations:
+      metallb.universe.tf/address-pool: kang
+      metallb.universe.tf/allow-shared-ip: sharethisip-itskang
+
+  ingress:
+    enabled: true
+    className: kang
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod-kang
+      nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+      nginx.ingress.kubernetes.io/auth-tls-secret: cert-manager/kang-ca
+
+    hosts:
+      - host: pdns-api.kangmak.es
+        paths: [ "/" ]
+    tls:
+    - secretName: pdns-certs
+      hosts:
+        - pdns-api.kangmak.es
+
+  zones:
+    kangmak.es: |
+      $ORIGIN .
+      kangmak.es        900  IN SOA      ns1.kangmak.es sysadmin.kangmak.es 1 86400 600 900 900 ; Retry and refresh of 15 minutes
+      kangmak.es        900  IN NS       ns1.kangmak.es
+      kangmak.es        900  IN NS       ns2.kangmak.es
+      kangmak.es        900  IN MX   10  mx.kangmak.es
+
+    animio.dev: |
+      $ORIGIN .
+      animio.dev   900  IN SOA      ns1.animio.dev sysadmin.animio.dev 1 86400 600 900 900 ; Retry and refresh of 15 minutes
+      animio.dev   900  IN NS       ns1.animio.dev
+      animio.dev   900  IN NS       ns2.animio.dev
+      animio.dev   900  IN MX   10  mx.animio.dev
+
+    miputa.casa: |
+      $ORIGIN .
+      miputa.casa         900  IN SOA      ns1.miputa.casa sysadmin.miputa.casa 1 86400 600 900 900 ; Retry and refresh of 15 minutes
+      miputa.casa         900  IN NS       ns1.miputa.casa
+      miputa.casa         900  IN NS       ns2.miputa.casa
+      miputa.casa         900  IN MX   10  mx.miputa.casa
+      dyndns.miputa.casa  900  IN A        0.0.0.0

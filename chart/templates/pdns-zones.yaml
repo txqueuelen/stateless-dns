@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pdns.fullname" . }}-zones
+  labels:
+    {{- include "pdns.labels" . | nindent 4 }}
+data:
+  {{- with .Values.pdns.zones }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
