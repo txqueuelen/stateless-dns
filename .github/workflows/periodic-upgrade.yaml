@@ -1,0 +1,58 @@
+name: Weekly upgrade
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 17 * * 5'  # At 17:00 on Friday
+
+jobs:
+  get-latest-version:
+    name: Build integration for
+    runs-on: ubuntu-latest
+    outputs:
+      bugfix: ${{ steps.pdns-version.outputs.bugfix }}
+      minor: ${{ steps.pdns-version.outputs.minor }}
+      major: ${{ steps.pdns-version.outputs.major }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Find pdns version to tag docker images
+      id: pdns-version
+      run: |
+        docker build -t test-version .
+
+        # docker run --rm --entrypoint "" test-version  apk list pdns
+        # pdns-4.5.3-r0 x86_64 {pdns} (GPL-2.0-only WITH OpenSSL-Exception) [installed]
+
+        # docker run --rm --entrypoint "" test-version  apk list pdns | cut -d\  -f1 | sed -e s/pdns-//
+        # 4.5.3-r0
+
+        version=$(docker run --rm --entrypoint "" test-version  apk list pdns | cut -d\  -f1 | sed -e s/pdns-//)
+        echo "::set-output name=bugfix::v$( cut -d- -f1   <<<"${version}")"
+        echo "::set-output name=minor::v$(  cut -d. -f1-2 <<<"${version}")"
+        echo "::set-output name=major::v$(  cut -d. -f1   <<<"${version}")"
+
+  build:
+    name: Build integration for
+    runs-on: ubuntu-latest
+    needs: [ "get-latest-version" ]
+    env:
+      DOCKER_PLATFORMS: "linux/amd64,linux/arm64,linux/arm"  # Must be consistent with the matrix from the job abo
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/setup-qemu-action@v1
+    - uses: docker/setup-buildx-action@v1
+    - uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      run: |
+        docker buildx build --push --platform=$DOCKER_PLATFORMS \
+          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.bugfix }} \
+          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.minor }} \
+          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.major }} \
+          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest \
+          .
