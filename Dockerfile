@@ -1,7 +1,9 @@
-FROM alpine:3.12
+FROM alpine
+
+ARG BOOTSTRAP_SQL=schema.sqlite3-4.5.x.sql
 
 ADD entrypoint.sh /entrypoint/script
-ADD bootstrap.sql /entrypoint/bootstrap.sql
+ADD $BOOTSTRAP_SQL /entrypoint/bootstrap.sql
 
 RUN apk add --no-cache \
     pdns \
@@ -9,7 +11,7 @@ RUN apk add --no-cache \
     sqlite \
     pdns-tools
 
-ENV VERSION=4.2 
+ENV VERSION=4.5
 
 EXPOSE 53 53/udp
 
