@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.deploymentAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "externalDNS.fullname" . }}
+  labels:
+    {{- include "externalDNS.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "externalDNS.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "externalDNS.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "externalDNS.serviceAccountName" . }}
+      containers:
+        - name: external-dns
+          image: "{{ .Values.externalDNS.repository }}:{{ .Values.externalDNS.tag }}"
+          imagePullPolicy: {{ .Values.externalDNS.pullPolicy }}
+          args:
+          - --source=ingress
+          - --source=service
+        {{- if default false .Values.externalDNS.sourceIstioObjects }}
+          - --source=istio-gateway
+          - --source=istio-virtualservice
+        {{- end }}
+          {{- range $zonename, $zonefile := .Values.pdns.zones }}
+          - --domain-filter={{ $zonename }}
+          {{- end }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "externalDNS.fullname" . }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.externalDNS.resources | nindent 12 }}

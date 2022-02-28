@@ -1,0 +1,11 @@
+apiVersion: v2
+name: pdns-stateless
+description: A Helm chart to integrate external-dns and powerdns in a stateless way
+
+maintainers:
+- name: kang
+  url: https://github.com/kang-makes
+
+type: application
+
+version: 1.1.0
