@@ -14,7 +14,11 @@ based on the LoadBalancers and ingresses running in the cluster.
 There is an RBAC configuration error. The service account has no access to all
 the objects it has to source. Here be dragons.
 
-### Pod restart 1 time and has empty zones
+### Pod restarts once then has no zones
 
 The zone fail is incorrect and the database is not populated. The sqlite database
 exists so it is not populated again.
+
+### Changing the zones does not restart the DNS
+
+An annotation with the has of the file is missing
