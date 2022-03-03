@@ -1,7 +1,3 @@
-# Default values for dns.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 externalDNS:
   repository: k8s.gcr.io/external-dns/external-dns
   pullPolicy: Always
@@ -62,8 +58,6 @@ pdns:
 
   ingress:
     enabled: false
-
-  # TODO: Document? Is it valid empty?
   # className: ""
   # annotations:
   #   kubernetes.io/ingress.class: nginx
@@ -122,4 +116,4 @@ serviceAccount:
 
 deploymentAnnotations: {}
 
-podAnnotations: {}  # TODO: Prometheus metrics?
+podAnnotations: {}

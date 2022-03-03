@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "externalDNS.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default .Chart.Name .Values.externalDNS.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
