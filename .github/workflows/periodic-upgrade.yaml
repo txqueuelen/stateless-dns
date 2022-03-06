@@ -3,7 +3,7 @@ name: Weekly upgrade
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 17 * * 5'  # At 17:00 on Friday
+    - cron:  '0 17 * * *'  # At 17:00
 
 jobs:
   get-latest-version:
@@ -51,8 +51,8 @@ jobs:
     - name: Build and push Docker image
       run: |
         docker buildx build --push --platform=$DOCKER_PLATFORMS \
-          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.bugfix }} \
-          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.minor }} \
-          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.get-latest-version.outputs.major }} \
-          -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest \
+          -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.bugfix }} \
+          -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.minor }} \
+          -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.major }} \
+          -t ghcr.io/${{ github.repository }}:latest \
           .
