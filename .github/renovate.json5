@@ -8,21 +8,12 @@
   ],
   "regexManagers": [
     {
-      // Update minikube version used in the actions
-      "fileMatch": [ "^.github/workflows/lint-charts.yaml$" ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/minikube",
+      // Update minikube action parameters
+      "fileMatch": [ "^.github/workflows/lint-and-charts.yaml$" ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "kubernetes/{{{ project }}}",
       "matchStrings": [
-        " *minikube version: (?<currentValue>.+)"
-      ]
-    },
-    {
-      // Update kubernetes version used by minikube
-      "fileMatch": [ "^.github/workflows/lint-charts.yaml$" ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/kubernetes",
-      "matchStrings": [
-        " *kubernetes version: (?<currentValue>.+)"
+        " *(?<project>.*) version: (?<currentValue>.*)"
       ]
     }
   ]
