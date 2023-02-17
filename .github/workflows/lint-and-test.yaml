@@ -8,7 +8,7 @@ jobs:
     outputs:
       charts: ${{ steps.list-changed.outputs.changed }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: helm/chart-testing-action@v2.1.0
@@ -24,7 +24,7 @@ jobs:
     needs: need-test
     if: ${{ needs.need-test.outputs.charts == 'true' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: helm/chart-testing-action@v2.1.0
