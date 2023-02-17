@@ -9,7 +9,7 @@
   "regexManagers": [
     {
       // Update minikube action parameters
-      "fileMatch": [ "^.github/workflows/lint-and-charts.yaml$" ],
+      "fileMatch": [ "^.github/workflows/lint-and-test.yaml$" ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "kubernetes/{{{ project }}}",
       "matchStrings": [
