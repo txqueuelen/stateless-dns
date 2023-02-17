@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: helm/chart-testing-action@v2.1.0
+      - uses: helm/chart-testing-action@v2.3.1
       - id: list-changed
         run: |
           changed=$(ct --config .github/ct.yaml list-changed)
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: helm/chart-testing-action@v2.1.0
+      - uses: helm/chart-testing-action@v2.3.1
       - run: |
           helm plugin install https://github.com/quintush/helm-unittest
       - uses: manusa/actions-setup-minikube@v2.7.2
