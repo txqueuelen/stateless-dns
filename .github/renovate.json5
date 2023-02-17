@@ -1,0 +1,20 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base", // Everything that renovatebot supports by default
+    // Renovate create an issue where all the renovate PRs are listed.
+    // The rule below should disable that issue.
+    ":disableDependencyDashboard"
+  ],
+  "regexManagers": [
+    {
+      // Update minikube action parameters
+      "fileMatch": [ "^.github/workflows/lint-and-charts.yaml$" ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "kubernetes/{{{ project }}}",
+      "matchStrings": [
+        " *(?<project>.*) version: (?<currentValue>.*)"
+      ]
+    }
+  ]
+}

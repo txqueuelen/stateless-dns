@@ -1,7 +1,8 @@
 externalDNS:
-  repository: k8s.gcr.io/external-dns/external-dns
-  pullPolicy: Always
+  registry: registry.k8s.io
+  repository: external-dns/external-dns
   tag: v0.10.1
+  pullPolicy: IfNotPresent
 
   # Allows to override the name of the objects related to external-dns
   nameOverride: ""
@@ -30,9 +31,10 @@ externalDNS:
       memory: 256Mi
 
 pdns:
-  repository: ghcr.io/txqueuelen/pdns-stateless
-  pullPolicy: Always
-  tag: v4.5
+  registry: ghcr.io
+  repository: txqueuelen/pdns-stateless
+  tag: v4.4
+  pullPolicy: IfNotPresent
 
   # Allows to override the name of the objects related to PowerDNS
   nameOverride: ""
