@@ -31,7 +31,7 @@ externalDNS:
       memory: 256Mi
 
 pdns:
-  tag: 4.7.0
+  tag: 4.7.1
   registry: ghcr.io
   repository: txqueuelen/pdns-stateless
   pullPolicy: IfNotPresent

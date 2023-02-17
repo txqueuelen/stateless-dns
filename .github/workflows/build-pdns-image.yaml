@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOCKER_PLATFORMS: "linux/amd64,linux/arm64,linux/arm"
+  DOCKER_PLATFORMS: "linux/amd64,linux/arm64"
 
 jobs:
   get-latest-version:
@@ -22,7 +22,7 @@ jobs:
       tag:   ${{ steps.test-upgrade.outputs.tag }}
       match: ${{ steps.test-upgrade.outputs.match }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - id: test-upgrade
       run: |
         docker run quay.io/skopeo/stable:latest inspect \
@@ -65,26 +65,39 @@ jobs:
     - uses: docker/setup-qemu-action@v2
     - uses: docker/setup-buildx-action@v2
 
+    - name: Patch faulty upstream files
+      run: |
+        rsync -av ./local/patches/ ./upstream/
+
     - name: Build pdns image
       run: |
-        docker buildx build --platform=$DOCKER_PLATFORMS \
+        cd upstream
+        git submodule init
+        git submodule update
+        docker buildx build \
+          --platform=$DOCKER_PLATFORMS \
+          --build-arg MAKEFLAGS="-j$(( $(nproc) - 1 ))" \
           -t temporary-pdns:${{ needs.get-latest-version.outputs.tag }} \
-          ./upstream
+          -f Dockerfile-auth \
+          .
 
     - name: Build modified image
       run: |
-        docker buildx build --platform=$DOCKER_PLATFORMS \
+        cd local
+        docker buildx build  --load --metadata-file metadata.json \
+          --platform=$DOCKER_PLATFORMS \
           --build-arg TAG=${{ needs.get-latest-version.outputs.tag }} \
           -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.tag }} \
           -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.minor }} \
           -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.major }} \
           -t ghcr.io/${{ github.repository }}:latest \
-          ./local
+          .
 
     - name: Push image in case this is merged to main
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: |
-        docker buildx build --push --platform=$DOCKER_PLATFORMS \
+        docker buildx build  --push \
+          --platform=$DOCKER_PLATFORMS \
           --build-arg TAG=${{ needs.get-latest-version.outputs.tag }} \
           -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.tag }} \
           -t ghcr.io/${{ github.repository }}:${{ needs.get-latest-version.outputs.minor }} \
