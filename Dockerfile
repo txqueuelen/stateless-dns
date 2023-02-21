@@ -10,15 +10,13 @@ WORKDIR /build/pdns-$PDNS_VERSION
 RUN ./configure --with-modules='bind gsqlite3' && \
     make -j $(nproc) && \
     make install
+RUN mkdir -p /usr/local/share/pdns && cp modules/gsqlite3backend/schema.sqlite3.sql /usr/local/share/pdns/schema.sqlite3.sql
 
 FROM debian:11-slim
 
 RUN apt update && apt install -y curl sqlite3 luajit && apt clean
 
-ARG BOOTSTRAP_SQL=schema.sqlite3-4.5.x.sql
-
 ADD entrypoint.sh /entrypoint/script
-ADD $BOOTSTRAP_SQL /entrypoint/bootstrap.sql
 
 COPY --from=builder /usr/local /usr/local
 
