@@ -1,0 +1,23 @@
+name: Release tagged image
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        run: |
+          tag=${GITHUB_REF#/refs/heads/}
+          docker build . --build-arg PDNS_VERSION=$tag -t ghcr.io/${{ github.repository }}:$tag
+          docker push $tag
