@@ -1,13 +1,12 @@
 name: Release tagged image
 
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [ released ]
 
 jobs:
   release:
-    name: Build and push image
+    name: Push image to latest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,6 +17,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push Docker image
         run: |
-          tag=${GITHUB_REF#/refs/heads/}
-          docker build . --build-arg PDNS_VERSION=$tag -t ghcr.io/${{ github.repository }}:$tag
-          docker push $tag
+          docker pull ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
+
+          docker tag \
+            ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME" \
+            ghcr.io/${{ github.repository }}:latest
+
+          docker push ghcr.io/${{ github.repository }}:latest
