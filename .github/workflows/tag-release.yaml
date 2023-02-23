@@ -1,9 +1,8 @@
 name: Release tagged image
 
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [ released ]
 
 jobs:
   release:
@@ -16,8 +15,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push Docker image
+      - name: Build
         run: |
-          tag=${GITHUB_REF#/refs/heads/}
-          docker build . --build-arg PDNS_VERSION=$tag -t ghcr.io/${{ github.repository }}:$tag
-          docker push $tag
+          docker build \
+            --build-arg PDNS_VERSION="$GITHUB_REF_NAME" \
+            -t ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME" \
+            -t ghcr.io/${{ github.repository }}:latest
+            .
+      - name: Push
+        run: |
+          docker push ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
+          docker push ghcr.io/${{ github.repository }}:latest
