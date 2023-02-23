@@ -6,7 +6,7 @@ on:
 
 jobs:
   release:
-    name: Push image to latest
+    name: Build and push image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,13 +15,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pull prerelease and pull as latest
+      - name: Build
         run: |
           docker build \
             --build-arg PDNS_VERSION="$GITHUB_REF_NAME" \
             -t ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME" \
             -t ghcr.io/${{ github.repository }}:latest
             .
-
+      - name: Push
+        run: |
           docker push ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
           docker push ghcr.io/${{ github.repository }}:latest
