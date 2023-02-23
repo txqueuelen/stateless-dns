@@ -19,8 +19,8 @@
     {
       // Update minikube action parameters
       "fileMatch": [ "^Dockerfile$" ],
-      "datasource": "github-tags",
-      "depName": "PowerDNS/pdns",
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "PowerDNS/pdns",
       "currentValueTemplate": "auth-{{ver}}",
       "matchStrings": [
         "ARG PDNS_VERSION=(?<ver>.*)"
