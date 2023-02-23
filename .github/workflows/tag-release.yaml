@@ -15,7 +15,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push Docker image
+      - name: Pull prerelease and pull as latest
         run: |
           docker pull ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
 
