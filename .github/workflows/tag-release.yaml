@@ -17,10 +17,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Pull prerelease and pull as latest
         run: |
-          docker pull ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
+          docker build \
+            --build-arg PDNS_VERSION="$GITHUB_REF_NAME" \
+            -t ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME" \
+            -t ghcr.io/${{ github.repository }}:latest
+            .
 
-          docker tag \
-            ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME" \
-            ghcr.io/${{ github.repository }}:latest
-
+          docker push ghcr.io/${{ github.repository }}:"$GITHUB_REF_NAME"
           docker push ghcr.io/${{ github.repository }}:latest
