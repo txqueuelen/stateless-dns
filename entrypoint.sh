@@ -15,7 +15,7 @@ function die () {
 DATABASE=$(grep -E '^gsqlite3-database=' /etc/pdns/pdns.conf | cut -d= -f2-)
 
 if ! [ -f "$DATABASE" ]; then
-  sqlite3 "$DATABASE" < /entrypoint/bootstrap.sql
+  sqlite3 "$DATABASE" < /usr/local/share/pdns/schema.sqlite3.sql
 
   for ZONEFILE in "${ZONEDIR:=/zones}"/*; do
     if [ -f "$ZONEFILE" ]; then

@@ -15,6 +15,16 @@
       "matchStrings": [
         " *(?<project>.*) version: (?<currentValue>.*)"
       ]
+    },
+    {
+      // Update minikube action parameters
+      "fileMatch": [ "^Dockerfile$" ],
+      "datasource": "github-tags",
+      "depName": "PowerDNS/pdns",
+      "currentValueTemplate": "auth-{{ver}}",
+      "matchStrings": [
+        "ARG PDNS_VERSION=(?<ver>.*)"
+      ]
     }
   ]
 }
