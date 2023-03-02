@@ -80,7 +80,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}-externalDNSMetrics
+  name: {{ include "pdns.fullname" . }}-edns-metrics
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:

@@ -14,7 +14,7 @@ rbac:
   additionalPermissions:
     - apiGroups: ["not.a.crd/v2"]
       resources: ["a-kind"]
-      verbs: ["list","watch"]
+      verbs: ["list", "watch"]
 
 podAnnotations:
   pod-annotation: a-value
@@ -112,7 +112,7 @@ externalDNS:
   logFormat: text  # text, json
   interval: 30s
   triggerLoopOnEvent: true
-  policy: upsert-only # sync, upsert-only.
+  policy: upsert-only  # sync, upsert-only.
   txtOwnerId: ""
   txtPrefix: ""
   txtWildcardReplacement: ""
@@ -185,7 +185,7 @@ pdns:
   #   test.dev   300  IN NS	      ns2.test.dev
   #   test.dev   300  IN MX	  10  mx.test.dev
 
-shareProcessNamespace: 
+shareProcessNamespace:
 
 nodeSelector: {}
 
