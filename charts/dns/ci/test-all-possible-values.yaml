@@ -1,0 +1,200 @@
+replicaCount: 1  # Unsetable to set this to more than 1 but I leave it for testing purposes.
+imagePullSecrets: []
+nameOverride: ""
+fullNameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    annotation: test
+  name: a-simple-name
+
+rbac:
+  create: true
+  additionalPermissions:
+    - apiGroups: ["not.a.crd/v2"]
+      resources: ["a-kind"]
+      verbs: ["list","watch"]
+
+podAnnotations:
+  pod-annotation: a-value
+
+podSecurityContext:
+  fsGroup: 2000
+
+service:
+  http:
+    enabled: true
+    type: ClusterIP
+    port: 80
+    annotations:
+      metallb.com/something: ClusterIP
+
+  # Service that points to the UDP port of pdns.
+  # It is separated from TCP DNS port because of limitations of Kubernetes.
+  # You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time.
+  # Two services should workaround this limitation.
+  udp:
+    enabled: true
+    type: None
+    port: 53
+    annotations:
+      metallb.com/something: None
+
+  # Service that points to the TCP port of pdns.
+  # It is separated from UDP DNS port because of limitations of Kubernetes.
+  # You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time.
+  # Two services should workaround this limitation.
+  tcp:
+    enabled: true
+    type: LoadBalancer
+    port: 53
+    annotations:
+      metallb.com/something: LoadBalancer
+
+ingress:
+  enabled: true
+  className: ingress-nginx
+  annotations:
+    kubernetes.io/ingress.class: ingress-nginx
+    kubernetes.io/tls-acme: true
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+externalDNS:
+  nameOverride: ""
+  fullnameOverride: ""
+
+  registry: registry.k8s.io
+  repository: external-dns/external-dns
+  tag: v0.13.1
+  pullPolicy: IfNotPresent
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 256Mi
+
+  sources:
+    - ambassador-host
+    - contour-httpproxy
+    - contour-ingressroute
+    - crd
+    - gloo-proxy
+    - ingress
+    - istio-gateway
+    - istio-virtualservice
+    - kong-tcpingress
+    - node
+    - openshift-route
+    - pod
+    - service
+    - skipper-routegroup
+
+  logLevel: info  # panic, debug, info, warning, error, fatal
+  logFormat: text  # text, json
+  interval: 30s
+  triggerLoopOnEvent: true
+  policy: upsert-only # sync, upsert-only.
+  txtOwnerId: ""
+  txtPrefix: ""
+  txtWildcardReplacement: ""
+  managedRecordTypes: A,CNAME,NS
+
+pdns:
+  nameOverride: ""
+  fullnameOverride: ""
+
+  registry: ghcr.io
+  repository: txqueuelen/pdns-stateless
+  tag: v4.4
+  pullPolicy: IfNotPresent
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 256Mi
+
+  config:
+    apiKey: ""
+
+  extraConfig: {}
+  # lines in the pdns.conf. These are already harcoded:
+  # launch: gsqlite3
+  # gsqlite3-database: /data/db
+  # webserver: yes
+  # webserver-address: 0.0.0.0
+  # webserver-port: 80
+  # api: yes
+  # api-key: ### from config above ###
+  # webserver-allow-from: 0.0.0.0/0
+
+  ingress:
+    enabled: false
+  # className: ""
+  # annotations:
+  #   kubernetes.io/ingress.class: nginx
+  #   kubernetes.io/tls-acme: "true"
+  # hosts:
+  #   - host: chart-example.local
+  #     paths: []
+  # tls: []
+  #   - secretName: chart-example-tls
+  #     hosts:
+  #       - chart-example.local
+
+  zones: {}
+  # test.es: |
+  #   $ORIGIN .
+  #   test.es   300  IN SOA      ns1.test.es sysadmin.test.es 1 600 600 86400 300
+  #   test.es   300  IN NS	      ns1.test.es
+  #   test.es   300  IN NS	      ns2.test.es
+  #   test.es   300  IN MX	  10  mx.test.es
+  # test.dev: |
+  #   $ORIGIN .
+  #   test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+  #   test.dev   300  IN NS	      ns1.test.dev
+  #   test.dev   300  IN NS	      ns2.test.dev
+  #   test.dev   300  IN MX	  10  mx.test.dev
+
+shareProcessNamespace: 
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+# find a new place to make this live:
+deploymentStrategy: {}
+priorityClassName: ""
+dnsPolicy:

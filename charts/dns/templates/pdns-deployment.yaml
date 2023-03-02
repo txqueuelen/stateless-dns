@@ -6,65 +6,125 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   name: {{ include "pdns.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "pdns.labels" . | nindent 4 }}
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
 spec:
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "pdns.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deploymentStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      
       annotations:
+        checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
+        {{- include "stateless-dns.labels" . | nindent 8 }}
         {{- include "pdns.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "stateless-dns.serviceAccountName" . }}
+      {{- with .Values.shareProcessNamespace }}
+      shareProcessNamespace: {{ . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
       containers:
         - name: pdns
-          image: "{{ .Values.pdns.repository }}:{{ .Values.pdns.tag }}"
+          image: "{{ .Values.pdns.registry }}/{{ .Values.pdns.repository }}:{{ .Values.pdns.tag }}"
           imagePullPolicy: {{ .Values.pdns.pullPolicy }}
+          {{- with .Values.pdns.securityContext }}
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              add:
-              - NET_BIND_SERVICE
-              drop:
-              - all
-          resources:
-            {{- toYaml .Values.pdns.resources | nindent 12 }}
-          {{- if or .Values.pdns.httpService.enabled (or .Values.pdns.udpService.enabled .Values.pdns.tcpService.enabled) }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - /entrypoint/script
+            - /usr/local/sbin/pdns_server
+          args:
+            - --launch=gsqlite3
+            - --gsqlite3-database=$(DATABASE_PATH)
+
+            {{- if .Values.service.http.enabled }}
+            - --webserver=yes
+            - --webserver-address=0.0.0.0
+            - --webserver-port={{ .Values.service.http.port }}
+            - --api=yes
+            - --api-key=$(POWERDNS_API_KEY)
+            {{- end }}
+
+            {{- range $arg := .Values.pdns.extraArgs }}
+            - {{ $arg }}
+            {{- end }}
+          {{- if or .Values.service.http.enabled (or .Values.service.udp.enabled .Values.service.tcp.enabled) }}
           ports:
-          {{- if .Values.pdns.httpService.enabled }}
-          - containerPort: {{ .Values.pdns.httpService.port }}
-            name: http
-            protocol: TCP
+            {{- if .Values.service.tcp.enabled }}
+            - name: dns-tcp
+              protocol: TCP
+              containerPort: {{ .Values.service.tcp.port }}
+            {{- end }}
+            {{- if .Values.service.udp.enabled }}
+            - name: dns-udp
+              protocol: UDP
+              containerPort: {{ .Values.service.udp.port }}
+            {{- end }}
+            {{- if .Values.service.http.enabled }}
+            - name: http
+              protocol: TCP
+              containerPort: {{ .Values.service.http.port }}
+            {{- end }}
           {{- end }}
-          {{- if .Values.pdns.udpService.enabled }}
-          - containerPort: {{ .Values.pdns.udpService.port }}
-            name: dns-udp
-            protocol: UDP
-          {{- end }}
-          {{- if .Values.pdns.tcpService.enabled }}
-          - containerPort: {{ .Values.pdns.tcpService.port }}
-            name: dns-tcp
-            protocol: TCP
-          {{- end }}
-          {{- end }}
+          env:
+            - name: "DATABASE_PATH"
+              value: /data/db
+            - name: "POWERDNS_API_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pdns.secret.name" . }}
+                  key: {{ include "pdns.secret.key" . }}
           volumeMounts:
             - mountPath: /data
               name: data
-            - mountPath: /etc/pdns
-              name: config
             - mountPath: /zones
               name: zones
+          resources:
+            {{- toYaml .Values.pdns.resources | nindent 12 }}
       volumes:
         - name: data
           emptyDir: {}
-        - name: config
-          configMap:
-            name: {{ include "pdns.fullname" . }}-config
         - name: zones
           configMap:
-            name: {{ include "pdns.fullname" . }}-zones
+            name: {{ include "stateless-dns.fullname" . }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

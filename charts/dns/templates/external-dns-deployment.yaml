@@ -5,13 +5,20 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "externalDNS.fullname" . }}
+  name: {{ include "external-dns.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "externalDNS.labels" . | nindent 4 }}
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+    {{- include "external-dns.selectorLabels" . | nindent 4 }}
 spec:
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "externalDNS.selectorLabels" . | nindent 6 }}
+      {{- include "external-dns.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deploymentStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -19,31 +26,91 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "externalDNS.selectorLabels" . | nindent 8 }}
+        {{- include "stateless-dns.labels" . | nindent 8 }}
+        {{- include "external-dns.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "externalDNS.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "stateless-dns.serviceAccountName" . }}
+      {{- with .Values.shareProcessNamespace }}
+      shareProcessNamespace: {{ . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
       containers:
         - name: external-dns
-          image: "{{ .Values.externalDNS.repository }}:{{ .Values.externalDNS.tag }}"
+          image: "{{ .Values.externalDNS.registry }}/{{ .Values.externalDNS.repository }}:{{ .Values.externalDNS.tag }}"
           imagePullPolicy: {{ .Values.externalDNS.pullPolicy }}
-          args:
-          - --source=ingress
-          - --source=service
-        {{- if default false .Values.externalDNS.sourceIstioObjects }}
-          - --source=istio-gateway
-          - --source=istio-virtualservice
-        {{- end }}
-          {{- range $zonename, $zonefile := .Values.pdns.zones }}
-          - --domain-filter={{ $zonename }}
-          {{- end }}
-          envFrom:
-          - configMapRef:
-              name: {{ include "externalDNS.fullname" . }}
+          {{- with .Values.externalDNS.securityContext }}
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - --log-level={{ .Values.externalDNS.logLevel }}
+            - --log-format={{ .Values.externalDNS.logFormat }}
+
+            - --interval={{ .Values.externalDNS.interval }}
+            {{- if .Values.externalDNS.triggerLoopOnEvent }}
+            - --events
+            {{- end }}
+
+            {{- range .Values.externalDNS.sources }}
+            - --source={{ . }}
+            {{- end }}
+            {{- range $zonename, $zonefile := .Values.zones }}
+            - --domain-filter={{ $zonename }}
+            {{- end }}
+            - --managed-record-types={{ .Values.externalDNS.managedRecordTypes }}
+ 
+            - --registry=txt
+            {{- if .Values.externalDNS.txtOwnerId }}
+            - --txt-owner-id={{ .Values.externalDNS.txtOwnerId }}
+            {{- end }}
+            {{- if .Values.externalDNS.txtPrefix }}
+            - --txt-prefix={{ .Values.externalDNS.txtPrefix }}
+            {{- end }}
+            {{- if .Values.externalDNS.txtSuffix }}
+            - --txt-suffix={{ .Values.externalDNS.txtSuffix }}
+            {{- end }}
+            {{- if .Values.externalDNS.txtWildcardReplacement }}
+            - --txt-wildcard-replacement={{ .Values.externalDNS.txtWildcardReplacement }}
+            {{- end }}
+
+            - --provider=pdns
+            - --pdns-server=http://{{ include "pdns.fullname" . }}-http
+            - --pdns-api-key=$(POWERDNS_API_KEY)
+
+          {{/*
+            - --pdns-tls-enabled=true/false
+            - --tls-ca < required
+            - --tls-client-cert < optional
+            - --tls-client-cert-key < optional
+          */ -}}
+          ports:
+            - name: metrics-http
+              protocol: TCP
+              containerPort: 7979
           resources:
             {{- toYaml .Values.externalDNS.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
