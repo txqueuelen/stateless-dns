@@ -1,20 +1,99 @@
----
+{{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "externalDNS.fullname" . }}-{{ .Release.Name }}
+  name: {{ include "stateless-dns.fullname" . }}
 rules:
-- apiGroups: [""]
-  resources: ["services","endpoints","pods"]
-  verbs: ["get","watch","list"]
-- apiGroups: ["extensions","networking.k8s.io"]
-  resources: ["ingresses"]
-  verbs: ["get","watch","list"]
-{{- if default false .Values.externalDNS.sourceIstioObjects }}
-- apiGroups: ["networking.istio.io"]
-  resources: ["gateways", "virtualservices"]
-  verbs: ["get","watch","list"]
+{{- $hasNode                := has "node"                 .Values.externalDNS.sources }}
+{{- $hasPod                 := has "pod"                  .Values.externalDNS.sources }}
+{{- $hasService             := has "service"              .Values.externalDNS.sources }}
+{{- $hasContourHTTPProxy    := has "contour-httpproxy"    .Values.externalDNS.sources }}
+{{- $hasGlooProxy           := has "gloo-proxy"           .Values.externalDNS.sources }}
+{{- $hasOpenshiftRoute      := has "openshift-route"      .Values.externalDNS.sources }}
+{{- $hasSkipperRoutegroup   := has "skipper-routegroup"   .Values.externalDNS.sources }}
+{{- $hasIstioGateway        := has "istio-gateway"        .Values.externalDNS.sources }}
+{{- $hasIstioVirtualservice := has "istio-virtualservice" .Values.externalDNS.sources }}
+{{- $hasIngress             := has "ingress"              .Values.externalDNS.sources }}
+{{- $hasAmbassadorHost      := has "ambassador-host"      .Values.externalDNS.sources }}
+{{- $hasContourIngressroute := has "contour-ingressroute" .Values.externalDNS.sources }}
+{{- $hasCRD                 := has "crd"                  .Values.externalDNS.sources }}
+{{- $hasKongTCPIngress      := has "kong-tcpingress"      .Values.externalDNS.sources }}
+
+
+{{- if or $hasNode $hasPod $hasService $hasContourHTTPProxy $hasGlooProxy $hasOpenshiftRoute $hasSkipperRoutegroup }}
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list","watch"]
 {{- end }}
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get", "watch", "list"]
+{{- if or $hasPod $hasService $hasContourHTTPProxy $hasGlooProxy $hasOpenshiftRoute $hasSkipperRoutegroup }}
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if or $hasService $hasContourHTTPProxy $hasGlooProxy $hasIstioGateway $hasIstioVirtualservice $hasOpenshiftRoute $hasSkipperRoutegroup }}
+  - apiGroups: [""]
+    resources: ["services","endpoints"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if or $hasIngress $hasContourHTTPProxy $hasOpenshiftRoute $hasSkipperRoutegroup }}
+  - apiGroups: ["extensions","networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if or $hasIstioGateway $hasIstioVirtualservice }}
+  - apiGroups: ["networking.istio.io"]
+    resources: ["gateways"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasIstioVirtualservice }}
+  - apiGroups: ["networking.istio.io"]
+    resources: ["virtualservices"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasAmbassadorHost }}
+  - apiGroups: ["getambassador.io"]
+    resources: ["hosts","ingresses"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasContourHTTPProxy }}
+  - apiGroups: ["projectcontour.io"]
+    resources: ["httpproxies"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasContourIngressroute }}
+  - apiGroups: ["contour.heptio.com"]
+    resources: ["ingressroutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasCRD }}
+  - apiGroups: ["externaldns.k8s.io"]
+    resources: ["dnsendpoints"]
+    verbs: ["get","watch","list"]
+  - apiGroups: ["externaldns.k8s.io"]
+    resources: ["dnsendpoints/status"]
+    verbs: ["*"]
+{{- end }}
+{{- if $hasGlooProxy }}
+  - apiGroups: ["gloo.solo.io","gateway.solo.io"]
+    resources: ["proxies","virtualservices"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasKongTCPIngress }}
+  - apiGroups: ["configuration.konghq.com"]
+    resources: ["tcpingresses"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasOpenshiftRoute }}
+  - apiGroups: ["route.openshift.io"]
+    resources: ["routes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasSkipperRoutegroup }}
+  - apiGroups: ["zalando.org"]
+    resources: ["routegroups"]
+    verbs: ["get","watch","list"]
+  - apiGroups: ["zalando.org"]
+    resources: ["routegroups/status"]
+    verbs: ["patch","update"]
+{{- end }}
+{{- end }}

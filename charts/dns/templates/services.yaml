@@ -1,0 +1,95 @@
+{{- if .Values.service.dnsUdp.enabled }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.service.dnsUdp.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}-udp
+  labels:
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.dnsUdp.type }}
+  ports:
+    - port: {{ .Values.service.dnsUdp.port }}
+      targetPort: dns-udp
+      protocol: TCP
+      name: dns
+  selector:
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
+{{- end }}
+
+
+{{- if .Values.service.dnsTcp.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.service.dnsTcp.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}-tcp
+  labels:
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.dnsTcp.type }}
+  ports:
+    - port: {{ .Values.service.dnsTcp.port }}
+      targetPort: dns-tcp
+      protocol: TCP
+      name: dns
+  selector:
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
+{{- end }}
+
+
+{{- if .Values.service.api.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.service.api.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}-http
+  labels:
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.api.type }}
+  ports:
+    - port: {{ .Values.service.api.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
+{{- end }}
+
+
+{{- if .Values.service.externalDNSMetrics.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.service.externalDNSMetrics.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "pdns.fullname" . }}-edns-metrics
+  labels:
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.externalDNSMetrics.type }}
+  ports:
+    - port: {{ .Values.service.externalDNSMetrics.port }}
+      targetPort: metrics-http
+      protocol: TCP
+      name: metrics-http
+  selector:
+    {{- include "pdns.selectorLabels" . | nindent 4 }}
+{{- end }}

@@ -1,13 +1,14 @@
----
+{{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name:  {{ include "externalDNS.fullname" . }}-{{ .Release.Name }}
+  name:  {{ include "stateless-dns.fullname" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name:  {{ include "externalDNS.fullname" . }}-{{ .Release.Name }}
+  name:  {{ include "stateless-dns.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "externalDNS.serviceAccountName" . }}
+  name: {{ include "stateless-dns.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
+{{- end }}

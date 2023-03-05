@@ -1,54 +1,35 @@
 {{/*
-Expand the name of the chart.
+Expand the name of external-dns deployment.
 */}}
-{{- define "externalDNS.name" -}}
-{{- default .Chart.Name .Values.externalDNS.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- define "external-dns.name" -}}
+{{- default "external-dns" .Values.externalDNS.nameOverride }}
 {{- end }}
+
 
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "externalDNS.fullname" -}}
-{{- $name := printf "%s-%s" .Release.Name "external-dns" }}
-{{- default $name .Values.externalDNS.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- define "external-dns.fullname" -}}
+{{- if .Values.externalDNS.fullnameOverride }}
+{{- .Values.externalDNS.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := include "stateless-dns.fullname" . }}
+{{- if contains $name (include "stateless-dns.fullname" .) }}
+{{- (include "stateless-dns.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" (include "stateless-dns.fullname" .) $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
 {{- end }}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "externalDNS.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "externalDNS.labels" -}}
-helm.sh/chart: {{ include "externalDNS.chart" . }}
-{{ include "externalDNS.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
 
 {{/*
 Selector labels
 */}}
-{{- define "externalDNS.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "externalDNS.name" . }}
+{{- define "external-dns.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "stateless-dns.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "externalDNS.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "externalDNS.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
+app.kubernetes.io/component: external-dns
 {{- end }}
