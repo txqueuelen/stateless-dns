@@ -18,7 +18,3 @@ the objects it has to source. Here be dragons.
 
 The zone fail is incorrect and the database is not populated. The sqlite database
 exists so it is not populated again.
-
-### Changing the zones does not restart the DNS
-
-An annotation with the has of the file is missing

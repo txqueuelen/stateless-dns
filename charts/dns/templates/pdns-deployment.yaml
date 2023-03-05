@@ -21,9 +21,9 @@ spec:
   {{- end }}
   template:
     metadata:
-      
       annotations:
-        checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | bcrypt }}
+        checksum/zones: {{ include (print $.Template.BasePath "/pdns-zones.yaml") . | bcrypt }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -36,9 +36,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "stateless-dns.serviceAccountName" . }}
-      {{- with .Values.shareProcessNamespace }}
-      shareProcessNamespace: {{ . }}
-      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -48,6 +45,9 @@ spec:
       {{- end }}
       {{- with .Values.dnsPolicy }}
       dnsPolicy: {{ . }}
+      {{- end }}
+      {{- with .Values.hostNetwork }}
+      hostNetwork: {{ . }}
       {{- end }}
       containers:
         - name: pdns
@@ -76,17 +76,17 @@ spec:
             {{- range $arg := .Values.pdns.extraArgs }}
             - {{ $arg }}
             {{- end }}
-          {{- if or .Values.service.http.enabled (or .Values.service.udp.enabled .Values.service.tcp.enabled) }}
+          {{- if or .Values.service.http.enabled .Values.service.udp.enabled .Values.service.tcp.enabled }}
           ports:
             {{- if .Values.service.tcp.enabled }}
             - name: dns-tcp
               protocol: TCP
-              containerPort: {{ .Values.service.tcp.port }}
+              containerPort: 53
             {{- end }}
             {{- if .Values.service.udp.enabled }}
             - name: dns-udp
               protocol: UDP
-              containerPort: {{ .Values.service.udp.port }}
+              containerPort: 53
             {{- end }}
             {{- if .Values.service.http.enabled }}
             - name: http
@@ -96,6 +96,8 @@ spec:
           {{- end }}
           env:
             - name: "DATABASE_PATH"
+              # This hardcoded value is inside the emptyDir but set as a variable because it is used by
+              # the entrypoint script to know where it should place the sqlite database.
               value: /data/db
             - name: "POWERDNS_API_KEY"
               valueFrom:

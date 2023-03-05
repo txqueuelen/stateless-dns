@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "stateless-dns.fullname" . }}-zones
+  name: {{ include "stateless-dns.fullname" . }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 data:

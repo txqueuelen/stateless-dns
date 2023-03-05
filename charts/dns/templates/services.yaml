@@ -1,10 +1,10 @@
-{{- if .Values.service.udp.enabled }}
+{{- if .Values.service.dnsUdp.enabled }}
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  {{- with .Values.service.udp.annotations }}
+  {{- with .Values.service.dnsUdp.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -12,9 +12,9 @@ metadata:
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.udp.type }}
+  type: {{ .Values.service.dnsUdp.type }}
   ports:
-    - port: {{ .Values.service.udp.port }}
+    - port: {{ .Values.service.dnsUdp.port }}
       targetPort: dns-udp
       protocol: TCP
       name: dns
@@ -23,12 +23,12 @@ spec:
 {{- end }}
 
 
-{{- if .Values.service.tcp.enabled }}
+{{- if .Values.service.dnsTcp.enabled }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- with .Values.service.tcp.annotations }}
+  {{- with .Values.service.dnsTcp.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -36,9 +36,9 @@ metadata:
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.tcp.type }}
+  type: {{ .Values.service.dnsTcp.type }}
   ports:
-    - port: {{ .Values.service.tcp.port }}
+    - port: {{ .Values.service.dnsTcp.port }}
       targetPort: dns-tcp
       protocol: TCP
       name: dns
@@ -47,12 +47,12 @@ spec:
 {{- end }}
 
 
-{{- if .Values.service.http.enabled }}
+{{- if .Values.service.api.enabled }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- with .Values.service.http.annotations }}
+  {{- with .Values.service.api.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -60,9 +60,9 @@ metadata:
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.http.type }}
+  type: {{ .Values.service.api.type }}
   ports:
-    - port: {{ .Values.service.http.port }}
+    - port: {{ .Values.service.api.port }}
       targetPort: http
       protocol: TCP
       name: http
