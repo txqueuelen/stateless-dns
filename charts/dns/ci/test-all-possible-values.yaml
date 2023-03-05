@@ -1,72 +1,81 @@
-replicaCount: 1  # Unsetable to set this to more than 1 but I leave it for testing purposes.
-imagePullSecrets: []
+replicaCount: 2
+imagePullSecrets:
+  - name: regcred
+  - name: regcred2
 nameOverride: ""
 fullNameOverride: ""
 
 serviceAccount:
   create: true
   annotations:
-    annotation: test
-  name: a-simple-name
+    annotatnio-aws-iam: why-i-am-like-this
+  name: alternative-name
 
 rbac:
   create: true
-  additionalPermissions:
-    - apiGroups: ["not.a.crd/v2"]
-      resources: ["a-kind"]
-      verbs: ["list", "watch"]
 
 podAnnotations:
-  pod-annotation: a-value
+  prometheus.io/scrape: "true"
 
 podSecurityContext:
   fsGroup: 2000
 
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 3
+    maxUnavailable: 2
+
+priorityClassName: system-node-critical
+
+hostNetwork: false
+
+dnsPolicy: ClusterFirst
+
 service:
-  http:
+  api:
     enabled: true
     type: ClusterIP
     port: 80
     annotations:
-      metallb.com/something: ClusterIP
+      service-annotation: api
 
-  # Service that points to the UDP port of pdns.
-  # It is separated from TCP DNS port because of limitations of Kubernetes.
-  # You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time.
-  # Two services should workaround this limitation.
-  udp:
+  dnsUdp:
+    enabled: true
+    type: ClusterIP
+    port: 53
+    annotations:
+      service-annotation: dnsUdp
+
+  dnsTcp:
+    enabled: true
+    type: ClusterIP
+    port: 53
+    annotations:
+      service-annotation: dnsTcp
+
+  externalDNSMetrics:
     enabled: true
     type: None
-    port: 53
+    port: 80
     annotations:
-      metallb.com/something: None
-
-  # Service that points to the TCP port of pdns.
-  # It is separated from UDP DNS port because of limitations of Kubernetes.
-  # You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time.
-  # Two services should workaround this limitation.
-  tcp:
-    enabled: true
-    type: LoadBalancer
-    port: 53
-    annotations:
-      metallb.com/something: LoadBalancer
+      prometheus.io/scrape: "true"
 
 ingress:
   enabled: true
-  className: ingress-nginx
+  className: default
   annotations:
-    kubernetes.io/ingress.class: ingress-nginx
-    kubernetes.io/tls-acme: true
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
       paths:
         - path: /
           pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls:
+    - secretName: chart-example-tls
+      hosts:
+        - chart-example.local
 
 externalDNS:
   nameOverride: ""
@@ -108,14 +117,15 @@ externalDNS:
     - service
     - skipper-routegroup
 
-  logLevel: info  # panic, debug, info, warning, error, fatal
-  logFormat: text  # text, json
+  logLevel: info
+  logFormat: text
   interval: 30s
   triggerLoopOnEvent: true
-  policy: upsert-only  # sync, upsert-only.
-  txtOwnerId: ""
-  txtPrefix: ""
-  txtWildcardReplacement: ""
+  policy: sync
+  txtOwnerId: "helm-ci-test"
+  txtPrefix: "prefix-"
+  txtSuffix: "-suffix"
+  txtWildcardReplacement: "wildcard-"
   managedRecordTypes: A,CNAME,NS
 
 pdns:
@@ -127,13 +137,16 @@ pdns:
   tag: v4.4
   pullPolicy: IfNotPresent
 
-  securityContext: {}
-    # capabilities:
-    #   drop:
-    #   - ALL
-    # readOnlyRootFilesystem: true
-    # runAsNonRoot: true
-    # runAsUser: 1000
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      add:
+      - NET_BIND_SERVICE
+      drop:
+      - all
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
 
   resources:
     requests:
@@ -143,58 +156,35 @@ pdns:
       cpu: 1000m
       memory: 256Mi
 
-  config:
-    apiKey: ""
+  apiKeySecret:
+    create: true
+    annotations:
+      something-gcp-iam-magic: inject-here-secret-or-something
+    name: a-different-name
+    key: a-key
+    valueBase64: ""
+    valuePlain: ThisIsSecret
 
-  extraConfig: {}
-  # lines in the pdns.conf. These are already harcoded:
-  # launch: gsqlite3
-  # gsqlite3-database: /data/db
-  # webserver: yes
-  # webserver-address: 0.0.0.0
-  # webserver-port: 80
-  # api: yes
-  # api-key: ### from config above ###
-  # webserver-allow-from: 0.0.0.0/0
+  extraArgs:
+    - --allow-notify-from=0.0.0.0/0,::/0
+    - --also-notify=192.0.2.1,203.0.113.167
 
-  ingress:
-    enabled: false
-  # className: ""
-  # annotations:
-  #   kubernetes.io/ingress.class: nginx
-  #   kubernetes.io/tls-acme: "true"
-  # hosts:
-  #   - host: chart-example.local
-  #     paths: []
-  # tls: []
-  #   - secretName: chart-example-tls
-  #     hosts:
-  #       - chart-example.local
+zones:
+  test.es: |
+    $ORIGIN .
+    test.es   300  IN SOA       ns1.test.es sysadmin.test.es 1 600 600 86400 300
+    test.es   300  IN NS	      ns1.test.es
+    test.es   300  IN NS	      ns2.test.es
+    test.es   300  IN MX	  10  mx.test.es
+  test.dev: |
+    $ORIGIN .
+    test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+    test.dev   300  IN NS	      ns1.test.dev
+    test.dev   300  IN NS	      ns2.test.dev
+    test.dev   300  IN MX	  10  mx.test.dev
 
-  zones: {}
-  # test.es: |
-  #   $ORIGIN .
-  #   test.es   300  IN SOA      ns1.test.es sysadmin.test.es 1 600 600 86400 300
-  #   test.es   300  IN NS	      ns1.test.es
-  #   test.es   300  IN NS	      ns2.test.es
-  #   test.es   300  IN MX	  10  mx.test.es
-  # test.dev: |
-  #   $ORIGIN .
-  #   test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
-  #   test.dev   300  IN NS	      ns1.test.dev
-  #   test.dev   300  IN NS	      ns2.test.dev
-  #   test.dev   300  IN MX	  10  mx.test.dev
-
-shareProcessNamespace:
-
+# We are not testing nodeSelector, toleration or affinity because it could fail to deploy in the CI.
+# We have to trust that this part works.
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
-
-
-# find a new place to make this live:
-deploymentStrategy: {}
-priorityClassName: ""
-dnsPolicy:

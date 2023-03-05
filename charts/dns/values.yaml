@@ -116,6 +116,7 @@ externalDNS:
   policy: sync  # How DNS records are synchronized between sources and providers. sync will delete entries created by external-dns, it could also destroy entries that are not owner by external-dns if at some point it mark it as owned. upsert-only will create entries but will prevent the deletion of them.
   txtOwnerId: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. This is an ID that will be added to that TXT entry.
   txtPrefix: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. The TXT entry name will be the entry that is being created plus this prefix.
+  txtSuffix: ""  # Same as above but TXT entries are decorated with a suffix instead of a prefix.
   txtWildcardReplacement: ""  # For more information on how TXT entries are created refer to the doc of `txtPrefix`. This is the prefix added to wildcard entries as they cannot be calculated.
   managedRecordTypes: A,CNAME,NS  # Entry type that external-dns will be able to create in the provider.
 
@@ -157,7 +158,7 @@ pdns:
 
   extraArgs: []  # Extra args to add to PowerDNS. When adding arguments, take into account that launch, gsqlite3-database, webserver, webserver-address, webserver-port, api, api-key are managed by this chart.
   # - --allow-notify-from=0.0.0.0/0,::/0
-  # - --also-notify=192.0.2.1, 203.0.113.167
+  # - --also-notify=192.0.2.1,203.0.113.167
 
 zones: {}  # Declaration of the zones the DNS will have by default at startup time. This is the seed to create the zones so external-dns is able to populate them. See `values.yaml` for an example.
 # test.es: |
