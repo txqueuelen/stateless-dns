@@ -1,121 +1,181 @@
-externalDNS:
-  registry: registry.k8s.io
-  repository: external-dns/external-dns
-  tag: v0.10.1
-  pullPolicy: IfNotPresent
+# Default values for test.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-  # Allows to override the name of the objects related to external-dns
-  nameOverride: ""
-
-  # If external-dns try to read istio objects without istio installed it will
-  # fail with an error "failed to sync cache: timed out waiting for the condition"
-  # This flag allows to enable or disable looking for istio's objects
-  sourceIstioObjects: false
-
-  extraConfig:
-    EXTERNAL_DNS_INTERVAL: 30s
-    EXTERNAL_DNS_EVENTS: "1"
-  # EXTERNAL_DNS_METRICS_ADDRESS: ":7979"
-
-  # EXTERNAL_DNS_REGISTRY: txt
-  # EXTERNAL_DNS_TXT_OWNER_ID: kang
-  # EXTERNAL_DNS_TXT_PREFIX: edns-managed.
-  # EXTERNAL_DNS_TXT_WILDCARD_REPLACEMENT: wildcard
-
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 1000m
-      memory: 256Mi
-
-pdns:
-  registry: ghcr.io
-  repository: txqueuelen/pdns-stateless
-  tag: v4.4
-  pullPolicy: IfNotPresent
-
-  # Allows to override the name of the objects related to PowerDNS
-  nameOverride: ""
-
-  config:
-    apiKey: ""
-
-  extraConfig: {}
-  # lines in the pdns.conf. These are already harcoded:
-  # launch: gsqlite3
-  # gsqlite3-database: /data/db
-  # webserver: yes
-  # webserver-address: 0.0.0.0
-  # webserver-port: 80
-  # api: yes
-  # api-key: ### from config above ###
-  # webserver-allow-from: 0.0.0.0/0
-
-  httpService:
-    enabled: true
-    port: 80
-    annotations: {}
-
-  ingress:
-    enabled: false
-  # className: ""
-  # annotations:
-  #   kubernetes.io/ingress.class: nginx
-  #   kubernetes.io/tls-acme: "true"
-  # hosts:
-  #   - host: chart-example.local
-  #     paths: []
-  # tls: []
-  #   - secretName: chart-example-tls
-  #     hosts:
-  #       - chart-example.local
-
-  udpService:
-    enabled: true
-    port: 53
-    annotations: {}
-    # external-dns.alpha.kubernetes.io/hostname: ns1.test.es,ns2.test.es,ns1.test.dev,ns2.test.dev
-    # external-dns.alpha.kubernetes.io/ttl: "300"
-    # metallb.universe.tf/address-pool: common
-    # metallb.universe.tf/allow-shared-ip: sharethisip-itscommon
-
-  tcpService:
-    enabled: true
-    port: 53
-    annotations: {}
-    # metallb.universe.tf/address-pool: common
-    # metallb.universe.tf/allow-shared-ip: sharethisip-itscommon
-
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 1000m
-      memory: 256Mi
-
-  zones: {}
-  # test.es: |
-  #   $ORIGIN .
-  #   test.es   300  IN SOA      ns1.test.es sysadmin.test.es 1 600 600 86400 300
-  #   test.es   300  IN NS	      ns1.test.es
-  #   test.es   300  IN NS	      ns2.test.es
-  #   test.es   300  IN MX	  10  mx.test.es
-  # test.dev: |
-  #   $ORIGIN .
-  #   test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
-  #   test.dev   300  IN NS	      ns1.test.dev
-  #   test.dev   300  IN NS	      ns2.test.dev
-  #   test.dev   300  IN MX	  10  mx.test.dev
-
+replicaCount: 1  # Unstable to set this to more than 1 but I leave it for testing purposes/future changes/features.
+imagePullSecrets: []  # Array of secrets (that must be manually created in the namespace) used to pull images from the registry. ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+nameOverride: ""  # String to override the name of the objects created (will maintain the release name and deployment suffix).
+fullNameOverride: ""  # String to override the name of the objects created (will maintain deployment suffix).
 
 serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
+  create: true  # Specifies whether a service account should be created.
+  annotations: {}  # Annotations to add to the service account.
+  name: ""  # The name of the service account to use. If not set and create is true, a name is generated using the fullname template.
 
-deploymentAnnotations: {}
+rbac:
+  create: true  # Specifies whether the chart should create the necesary RBAC or not.
 
-podAnnotations: {}
+podAnnotations: {}  # Map of annotations to add to the pods.
+
+podSecurityContext: {}  # Pod Security Context. ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  # fsGroup: 2000
+
+deploymentStrategy: {}  # Update strategy for deployments. Only really applicable for deployments with RWO PVs attached when replicas = 1, an update can get "stuck", as the previous pod remains attached to the PV, and the "incoming" pod can never start. Changing the strategy to "Recreate" will terminate the single previous pod, so that the new, incoming pod can attach to the PV
+
+priorityClassName: ""  # Indicates the pod's priority. ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+
+hostNetwork:  # Set hostnetwork to the pods.
+
+dnsPolicy:  # Set DNS policy for the pod.
+
+service:
+  api:
+    enabled: true  # Specifies whether a service that points to the http port of pdns http API should be created. It is separated from the other services so the user can select service type freely from the others needed.
+    type: ClusterIP  # Service type.
+    port: 80  # Service port.
+    annotations: {}  # Annotations to add to the service.
+
+  dnsUdp:
+    enabled: true  # Specifies whether a service that points to the UDP port of pdns should be created. It is separated from TCP DNS port because of limitations of Kubernetes. You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time. Two services should workaround this limitation.
+    type: ClusterIP  # Service type.
+    port: 53  # Service port.
+    annotations: {}  # Annotations to add to the service.
+
+  dnsTcp:
+    enabled: true  # Specifies whether a service that points to the TCP port of pdns should be created. It is separated from UDP DNS port because of limitations of Kubernetes. You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time. Two services should workaround this limitation.
+    type: ClusterIP  # Service type.
+    port: 53  # Service port.
+    annotations: {}  # Annotations to add to the service.
+
+  externalDNSMetrics:
+    enabled: true  # Specifies whether a service that points to the http port of external-dns prometheus metrics.
+    type: ClusterIP  # Service type.
+    port: 80  # Service port.
+    annotations: {}  # Annotations to add to the service.
+
+ingress:
+  enabled: false  # Specifies whether a ingress resource whould be created to access PowerDNS API.
+  className: ""  # IngressClass that will be be used to implement the Ingress. This is required if you have more than one IngressClass marked as the default for your cluster. ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  annotations: {}  # Annotations to add to the ingress.
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts: []  # Hosts to configure for the ingress. Refer to example in the `values.yaml`.
+  # - host: chart-example.local
+  #   paths:
+  #     - path: /
+  #       pathType: ImplementationSpecific
+  tls: []  # Secrets (of type TLS) to configure for the ingress. Refer to example in the `values.yaml`.
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+externalDNS:
+  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
+  fullnameOverride: ""  # String to override the name of the objects created.
+
+  registry: registry.k8s.io  # Image registry
+  repository: external-dns/external-dns  # Image repository
+  tag: v0.13.1  # Image tag
+  pullPolicy: IfNotPresent  # Image pull policy.
+
+  securityContext:
+    runAsNonRoot: true  # external-dns should not have root access.
+    runAsUser: 65534  # This is `nobody`'s uid.
+    readOnlyRootFilesystem: true  # external-dns should not write to disk.
+    capabilities:
+      drop: ["ALL"]  # Drop all privileges.
+
+  resources:
+    requests:
+      cpu: 50m  # CPU request for external-dns container
+      memory: 128Mi  # RAM request for external-dns container
+    limits:
+      cpu: 1000m  # CPU limit for external-dns container
+      memory: 256Mi  # RAM limit for external-dns container
+
+  sources:  # source types to be observed to create new DNS entries on the provider (hardcoded to PowerDNS in this chart). For mor information of the source available, take a look at the `values.yaml`.
+  # - ambassador-host
+  # - contour-httpproxy
+  # - contour-ingressroute
+    - crd
+  # - gloo-proxy
+    - ingress
+  # - istio-gateway
+  # - istio-virtualservice
+  # - kong-tcpingress
+  # - node
+  # - openshift-route
+  # - pod
+    - service
+  # - skipper-routegroup
+
+  logLevel: info  # Sets externalDNS log level. Possible values are: panic, debug, info, warning, error, and fatal
+  logFormat: text  # Sets externalDNS log format. Possible values are: text, json
+  interval: 30s  # The amount of time between external-dns runs.
+  triggerLoopOnEvent: true  # Make external-dns to act by reacting to cluster events besides the polling with the interval above.
+  policy: sync  # How DNS records are synchronized between sources and providers. sync will delete entries created by external-dns, it could also destroy entries that are not owner by external-dns if at some point it mark it as owned. upsert-only will create entries but will prevent the deletion of them.
+  txtOwnerId: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. This is an ID that will be added to that TXT entry.
+  txtPrefix: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. The TXT entry name will be the entry that is being created plus this prefix.
+  txtSuffix: ""  # Same as above but TXT entries are decorated with a suffix instead of a prefix.
+  txtWildcardReplacement: ""  # For more information on how TXT entries are created refer to the doc of `txtPrefix`. This is the prefix added to wildcard entries as they cannot be calculated.
+  managedRecordTypes: A,CNAME,NS  # Entry type that external-dns will be able to create in the provider.
+
+pdns:
+  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
+  fullnameOverride: ""  # String to override the name of the objects created.
+
+  registry: ghcr.io  # Image registry
+  repository: txqueuelen/pdns-stateless  # Image repository
+  tag: v4.4  # Image tag
+  pullPolicy: IfNotPresent  # Image pull policy.
+
+  securityContext:
+    allowPrivilegeEscalation: false  # PowerDNS should not be able to escalete to root.
+    capabilities:
+      add:  # PowerDNS need to bind protected ports. Like the 53 for DNS of 80 for the HTTP API.
+      - NET_BIND_SERVICE
+      drop:  # All other privileged must be droped.
+      - all
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  resources:
+    requests:
+      cpu: 50m  # CPU request for PowerDNS container
+      memory: 128Mi  # RAM request for PowerDNS container
+    limits:
+      cpu: 1000m  # CPU limit for PowerDNS container
+      memory: 256Mi  # RAM limit for PowerDNS container
+
+  apiKeySecret:
+    create: true  # Specifies whether the secret should be created
+    annotations: {}  # Annotations to add to the secret
+    name: ""  # The name of the secret to use. If not set and create is true, a name is generated using the fullname template. You can set your own secret by setting `create` to false and point this `name` to your secret's name.
+    key: ""  # Same as with name but for the key to look for.
+    valueBase64: ""  # The value of the secret in base64. Take into that both (base64 and plain text) of them are equaly insecure and you should use a secret management like `helm-secrets` if you want to keep this in the values of Helm instead of using your own secret management system.
+    valuePlain: ""  # Same as above but on plain text. Base 64 takes precedence over this one in case both are provided.
+
+  extraArgs: []  # Extra args to add to PowerDNS. When adding arguments, take into account that launch, gsqlite3-database, webserver, webserver-address, webserver-port, api, api-key are managed by this chart.
+  # - --allow-notify-from=0.0.0.0/0,::/0
+  # - --also-notify=192.0.2.1,203.0.113.167
+
+zones: {}  # Declaration of the zones the DNS will have by default at startup time. This is the seed to create the zones so external-dns is able to populate them. See `values.yaml` for an example.
+# test.es: |
+#   $ORIGIN .
+#   test.es   300  IN SOA       ns1.test.es sysadmin.test.es 1 600 600 86400 300
+#   test.es   300  IN NS	      ns1.test.es
+#   test.es   300  IN NS	      ns2.test.es
+#   test.es   300  IN MX	  10  mx.test.es
+# test.dev: |
+#   $ORIGIN .
+#   test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+#   test.dev   300  IN NS	      ns1.test.dev
+#   test.dev   300  IN NS	      ns2.test.dev
+#   test.dev   300  IN MX	  10  mx.test.dev
+
+nodeSelector: {}  # Node labels for pod assignment. ref: https://kubernetes.io/docs/user-guide/node-selection/
+
+tolerations: []  # Tolerations for pod assignment. ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+
+affinity: {}  # Affinity for pod assignment. ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity

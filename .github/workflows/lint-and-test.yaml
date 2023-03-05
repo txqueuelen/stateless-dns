@@ -28,8 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: helm/chart-testing-action@v2.3.1
-      - run: |
-          helm plugin install https://github.com/quintush/helm-unittest
+      - run: helm plugin install https://github.com/helm-unittest/helm-unittest
       - uses: manusa/actions-setup-minikube@v2.7.2
         with:
           minikube version: v1.29.0
