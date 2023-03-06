@@ -8,7 +8,7 @@ on:
 # Prevent two release workflows from running concurrently.
 concurrency: 
   group: chart-releaser
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   release:
