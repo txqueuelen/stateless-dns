@@ -23,7 +23,7 @@ spec:
     metadata:
       annotations:
         checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum | bcrypt | quote }}
-        checksum/zones: {{ include (print $.Template.BasePath "/pdns-zones.yaml") . | sha256sum }}
+        checksum/zones: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
