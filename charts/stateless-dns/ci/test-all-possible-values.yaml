@@ -56,7 +56,7 @@ service:
 
   externalDNSMetrics:
     enabled: true
-    type: None
+    type: ClusterIP
     port: 80
     annotations:
       prometheus.io/scrape: "true"
