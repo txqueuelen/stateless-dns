@@ -1,0 +1,32 @@
+hostNetwork: true
+
+externalDNS:
+  sources:
+    - crd
+    - ingress
+    - service
+
+  logLevel: debug
+  logFormat: text
+  interval: 10s
+  triggerLoopOnEvent: true
+  policy: sync
+
+pdns:
+  tag: ci
+  apiKeySecret:
+    create: true
+    valuePlain: a-testing-apikey
+zones:
+  test.es: |
+    $ORIGIN .
+    test.es   300  IN SOA       ns1.test.es sysadmin.test.es 1 600 600 86400 300
+    test.es   300  IN NS	      ns1.test.es
+    test.es   300  IN NS	      ns2.test.es
+    test.es   300  IN MX	  10  mx.test.es
+  test.dev: |
+    $ORIGIN .
+    test.dev   300  IN SOA      ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+    test.dev   300  IN NS	      ns1.test.dev
+    test.dev   300  IN NS	      ns2.test.dev
+    test.dev   300  IN MX	  10  mx.test.dev
