@@ -15,7 +15,7 @@ If release name contains chart name it will be used as a full name.
 {{- if .Values.pdns.fullnameOverride }}
 {{- .Values.pdns.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := include "stateless-dns.name" . }}
+{{- $name := include "pdns.name" . }}
 {{- if contains $name (include "stateless-dns.fullname" .) }}
 {{- (include "stateless-dns.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- else }}

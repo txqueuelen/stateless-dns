@@ -126,7 +126,7 @@ pdns:
 
   registry: ghcr.io  # Image registry
   repository: txqueuelen/pdns-stateless  # Image repository
-  tag: v4.4  # Image tag
+  tag: v4.5.3  # Image tag
   pullPolicy: IfNotPresent  # Image pull policy.
 
   securityContext:
