@@ -132,8 +132,8 @@ pdns:
   fullnameOverride: ""
 
   registry: ghcr.io
-  repository: txqueuelen/pdns-stateless
-  tag: v4.5.3
+  repository: txqueuelen/stateless-dns
+  tag: ci  # We are going to test always with the version built or the latest stable
   pullPolicy: IfNotPresent
 
   securityContext:
@@ -166,7 +166,8 @@ pdns:
 
   extraArgs:
     - --allow-notify-from=0.0.0.0/0,::/0
-    - --also-notify=192.0.2.1,203.0.113.167
+    - --also-notify=8.8.8.8,8.8.4.4
+    - --loglevel=7  # In case something fails, we are not blind.
 
 zones:
   test.es: |

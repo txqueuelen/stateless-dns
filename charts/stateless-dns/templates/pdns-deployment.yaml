@@ -64,6 +64,14 @@ spec:
           args:
             - --launch=gsqlite3
             - --gsqlite3-database=$(DATABASE_PATH)
+            {{- if or .Values.service.dnsTcp.enabled .Values.service.dnsUdp.enabled }}
+              {{- if and .Values.service.dnsTcp.enabled .Values.service.dnsUdp.enabled }}
+                {{- if not (eq .Values.service.dnsTcp.port .Values.service.dnsUdp.port) }}
+                  {{- fail ".Values.service.dnsTcp.port .Values.service.dnsUdp.port must be equal" }}
+                {{- end }}
+              {{- end }}
+            - --local-port={{ .Values.service.dnsTcp.port }}
+            {{- end }}
 
             {{- if .Values.service.api.enabled }}
             - --webserver=yes
@@ -81,12 +89,12 @@ spec:
             {{- if .Values.service.dnsTcp.enabled }}
             - name: dns-tcp
               protocol: TCP
-              containerPort: 53
+              containerPort: {{ .Values.service.dnsTcp.port }}
             {{- end }}
             {{- if .Values.service.dnsUdp.enabled }}
             - name: dns-udp
               protocol: UDP
-              containerPort: 53
+              containerPort: {{ .Values.service.dnsUdp.port }}
             {{- end }}
             {{- if .Values.service.api.enabled }}
             - name: http
