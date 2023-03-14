@@ -93,6 +93,12 @@ spec:
             - name: metrics-http
               protocol: TCP
               containerPort: 7979
+          env:
+            - name: "POWERDNS_API_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pdns.secret.name" . }}
+                  key: {{ include "pdns.secret.key" . }}
           resources:
             {{- toYaml .Values.externalDNS.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
