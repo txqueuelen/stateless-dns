@@ -3,37 +3,14 @@ name: Lint and test PR
 on: pull_request
 
 # Prevent to consume free CI minutes by not running two workflows in the CI at the same time.
-concurrency: 
+concurrency:
   group: pr-testing
   cancel-in-progress: true
 
 jobs:
-  paths-filter:
-    name: Filter which jobs need to be run
-    runs-on: ubuntu-latest
-    outputs:
-      workflows: ${{ steps.filter.outputs.workflows }}
-      build: ${{ steps.filter.outputs.build }}
-      charts: ${{ steps.filter.outputs.charts }}
-    steps:
-    - uses: actions/checkout@v3
-    - uses: dorny/paths-filter@v2
-      id: filter
-      with:
-        filters: |
-          workflows:
-            - '.github/workflows/**'
-          build:
-            - 'build/**'
-          charts:
-            - 'charts/**'
-
-
   docker-build:
     name: Build PowerDNS image
     runs-on: ubuntu-latest
-    needs: paths-filter
-    if: ${{ needs.paths-filter.outputs.build == 'true' || needs.paths-filter.outputs.workflows == 'true' }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
@@ -48,62 +25,54 @@ jobs:
   lint-charts:
     name: Lint charts
     runs-on: ubuntu-latest
-    needs: [paths-filter, docker-build]
-    if: ${{ needs.paths-filter.outputs.charts == 'true' || needs.paths-filter.outputs.workflows == 'true' }}
+    # Wait for docker-build job to complete to reuse build cache.
+    needs: [ docker-build ]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Install helm/chart-testing
-      uses: helm/chart-testing-action@v2.3.1
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install helm/chart-testing
+        uses: helm/chart-testing-action@v2.3.1
 
-    # Lint charts and run unit tests
-    - name: Lint charts
-      run: ct --config .github/ct.yaml lint --all
+      # Lint charts and run unit tests
+      - name: Lint charts
+        run: ct --config .github/ct.yaml lint --all
 
-    - name: Install helm unit test siute
-      run: helm plugin install https://github.com/helm-unittest/helm-unittest
-    - name: Run unit tests
-      run: |
-        for chart in $(ct list-changed --config .github/ct-lint.yaml); do
-          if [ -d "$chart/tests/" ]; then
-            helm unittest $chart -3
-          fi
-        done
+      - name: Install helm unit test siute
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+      - name: Run unit tests
+        run: |
+          for chart in $(ct list-changed --config .github/ct-lint.yaml); do
+            if [ -d "$chart/tests/" ]; then
+              helm unittest $chart -3
+            fi
+          done
 
-    # Download the image built before or a stable one
-    - name: Download artifact from previous job
-      if: needs.docker-build.result != 'skipped'
-      uses: actions/download-artifact@v3
-      with:
-        name: docker-image
-        path: /tmp
-    - name: Load image from previous job
-      if: needs.docker-build.result != 'skipped'
-      run: docker load --input /tmp/stateless-dns.tar
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v4
+        with:
+          tags: ${{ github.repository }}-ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    - name: Rename latest docker build as ci to make e2e
-      if: needs.docker-build.result == 'skipped'
-      run: |
-        docker pull ghcr.io/txqueuelen/stateless-dns:latest
-        docker tag ghcr.io/txqueuelen/stateless-dns:latest ghcr.io/txqueuelen/stateless-dns:ci
+      # Install Minikube to test install paths
+      - name: Install Minikube
+        uses: manusa/actions-setup-minikube@v2.7.2
+        with:
+          minikube version: v1.29.0
+          kubernetes version: v1.26.0
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker
+          start args: "--container-runtime=containerd"
 
-    # Install Minikube to test install paths
-    - name: Install Minikube
-      uses: manusa/actions-setup-minikube@v2.7.2
-      with:
-        minikube version: v1.29.0
-        kubernetes version: v1.26.0
-        github token: ${{ secrets.GITHUB_TOKEN }}
-        driver: docker
-        start args: "--container-runtime=containerd"
-
-    # Test install paths with a stable image. Here stability will be tested too. Pods should finish and keep running.
-    - name: Configure testing scenario
-      run: minikube image load ghcr.io/txqueuelen/stateless-dns:ci
-    - name: Test charts' installation path
-      run: ct --config .github/ct.yaml install --all
+      # Test install paths with a stable image. Here stability will be tested too. Pods should finish and keep running.
+      - name: Configure testing scenario
+        run: minikube image load ghcr.io/txqueuelen/stateless-dns:ci
+      - name: Test charts' installation path
+        run: ct --config .github/ct.yaml install --all
     # I need to comment the upghrade path until we have a first release.
     # Comment for the future me: 
     #     This also failed because the port was used: set a strategy to recreate.
@@ -113,66 +82,58 @@ jobs:
 
   e2e:
     name: Run e2e test
-    needs: [ lint-charts, docker-build ]
-    if: ${{ always() && !( failure() ) }}  # This step has to run always (if any of the needs are skipped) but with no previous job failed.
+    # Wait for docker-build job to complete to reuse build cache.
+    needs: [ docker-build ]
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    # Download the image built before or a stable one
-    - name: Download artifact from previous job
-      if: needs.docker-build.result != 'skipped'
-      uses: actions/download-artifact@v3
-      with:
-        name: docker-image
-        path: /tmp
-    - name: Load image from previous job
-      if: needs.docker-build.result != 'skipped'
-      run: docker load --input /tmp/stateless-dns.tar
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Rename latest docker build as ci to make e2e
-      if: needs.docker-build.result == 'skipped'
-      run: |
-        docker pull ghcr.io/txqueuelen/stateless-dns:latest
-        docker tag ghcr.io/txqueuelen/stateless-dns:latest ghcr.io/txqueuelen/stateless-dns:ci
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v4
+        with:
+          tags: ${{ github.repository }}-ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    # Install Minikube to make the e2e test
-    - name: Install Minikube
-      uses: manusa/actions-setup-minikube@v2.7.2
-      with:
-        minikube version: v1.29.0
-        kubernetes version: v1.26.0
-        github token: ${{ secrets.GITHUB_TOKEN }}
-        driver: docker
-        start args: "--container-runtime=containerd"
+      # Install Minikube to make the e2e test
+      - name: Install Minikube
+        uses: manusa/actions-setup-minikube@v2.7.2
+        with:
+          minikube version: v1.29.0
+          kubernetes version: v1.26.0
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker
+          start args: "--container-runtime=containerd"
 
-    # Install charts with the e2e values (tested also in lint-charts job)
-    - name: Configure testing scenario
-      run: |
-        minikube image load ghcr.io/txqueuelen/stateless-dns:ci
-        for CHART in charts/*; do
-          helm upgrade --install \
-            "$(basename $CHART)" "$CHART" \
-            --create-namespace --namespace e2e-staless-dns \
-            --values "$CHART/ci/e2e-values.yaml" \
-            --wait --timeout 60s
-        done
+      # Install charts with the e2e values (tested also in lint-charts job)
+      - name: Configure testing scenario
+        run: |
+          minikube image load ghcr.io/txqueuelen/stateless-dns:ci
+          for CHART in charts/*; do
+            helm upgrade --install \
+              "$(basename $CHART)" "$CHART" \
+              --create-namespace --namespace e2e-staless-dns \
+              --values "$CHART/ci/e2e-values.yaml" \
+              --wait --timeout 60s
+          done
 
-    # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
-    # for powerdns to startup and for external-dns to have to to run (at least) 3 times
-    - name: Wait 40 seconds for everything to settle
-      run: sleep 40
+      # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
+      # for powerdns to startup and for external-dns to have to to run (at least) 3 times
+      - name: Wait 40 seconds for everything to settle
+        run: sleep 40
 
-    # Begin e2e test.
-    - name: Basic tests that are not e2e but allow me to test the CI
-      run: |
-        kubectl -n e2e-staless-dns get pods || true
-
-        curl localhost:80 || true
-
-        dig test.es @localhost || true
-        dig test.dev @localhost || true
-
-        nslookup test.es localhost || true
-        nslookup test.dev localhost || true
+      # Begin e2e test.
+      - name: Basic tests that are not e2e but allow me to test the CI
+        run: |
+          kubectl -n e2e-staless-dns get pods || true
+          
+          curl localhost:80 || true
+          
+          dig test.es @localhost || true
+          dig test.dev @localhost || true
+          
+          nslookup test.es localhost || true
+          nslookup test.dev localhost || true
