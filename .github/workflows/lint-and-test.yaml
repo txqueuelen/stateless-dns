@@ -41,4 +41,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: docker build . -t pdns-stateless:ci
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build
+        uses: docker/build-push-action@v4
+        with:
+          tags: ${{ github.repository }}-ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -21,9 +21,9 @@
       "fileMatch": [ "^Dockerfile$" ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "PowerDNS/pdns",
-      "currentValueTemplate": "auth-{{ver}}",
+      "extractVersionTemplate": "^auth-(?<version>.*)$",
       "matchStrings": [
-        "ARG PDNS_VERSION=(?<ver>.*)"
+        "ARG PDNS_VERSION=(?<currentValue>.*)"
       ]
     }
   ]
