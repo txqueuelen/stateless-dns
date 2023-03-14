@@ -40,9 +40,11 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
       - name: Run unit tests
         run: |
-          for chart in $(ct list-changed --config .github/ct-lint.yaml); do
+          for chart in charts/*; do
             if [ -d "$chart/tests/" ]; then
               helm unittest $chart -3
+            else
+              echo "::warning file=$chart,title=Skipping unit test for $chart::$chart does not have a tests/ folder"
             fi
           done
 
