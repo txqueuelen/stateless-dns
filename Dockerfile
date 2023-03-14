@@ -16,6 +16,7 @@ FROM debian:11-slim
 
 RUN apt update && apt install -y curl sqlite3 luajit && apt clean
 
+# REMINDER: .dockerignore defaults to exclude everything. Add exceptions to be copied there.
 ADD entrypoint.sh /entrypoint/script
 
 COPY --from=builder /usr/local /usr/local
