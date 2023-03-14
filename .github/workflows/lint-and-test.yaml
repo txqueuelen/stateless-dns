@@ -13,7 +13,7 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v4
         with:
-          tags: ${{ github.repository }}-ci
+          tags: ci.local/${{ github.repository }}:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -66,7 +66,8 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v4
         with:
-          tags: ${{ github.repository }}-ci
+          load: true  # Bring image to the host so we can minikube load it later.
+          tags: ci.local/${{ github.repository }}:ci
           cache-from: type=gha
           # No need to push anything to cache here.
 
@@ -81,7 +82,7 @@ jobs:
           start args: "--container-runtime=containerd"
       # Test chart installation with a stable image.
       - name: Configure testing scenario
-        run: minikube image load ${{ github.repository }}-ci
+        run: minikube image load ci.local/${{ github.repository }}:ci
 
       - name: Install helm/chart-testing
         uses: helm/chart-testing-action@v2.3.1
