@@ -87,7 +87,10 @@ jobs:
       - name: Install helm/chart-testing
         uses: helm/chart-testing-action@v2.3.1
       - name: Test charts' installation path
-        run: ct --config .github/ct.yaml install --all
+        run: |
+          ct install --all \
+          --config .github/ct.yaml \
+          --helm-extra-args "--timeout 1m"
 
     # TODO: Upgrade path.
     # I need to comment the upghrade path until we have a first release.
