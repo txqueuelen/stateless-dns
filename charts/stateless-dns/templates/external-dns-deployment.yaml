@@ -44,8 +44,10 @@ spec:
       {{- with .Values.hostNetwork }}
       hostNetwork: {{ . }}
       {{- end }}
-      {{- with .Values.dnsPolicy }}
-      dnsPolicy: {{ . }}
+      {{- if and .Values.hostNetwork (not .Values.dnsPolicy) }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
       {{- end }}
       containers:
         - name: external-dns
