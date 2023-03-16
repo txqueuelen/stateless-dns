@@ -81,8 +81,9 @@ jobs:
           driver: docker
           start args: "--container-runtime=containerd"
       # Test chart installation with a stable image.
-      - name: Configure testing scenario
-        run: minikube image load ci.local/${{ github.repository }}:ci
+      - name: Load image into minikube
+        run: |
+          minikube image load ci.local/${{ github.repository }}:ci
 
       - name: Install helm/chart-testing
         uses: helm/chart-testing-action@v2.3.1
@@ -92,12 +93,12 @@ jobs:
           --config .github/ct.yaml \
           --helm-extra-args "--timeout 1m"
 
-    # TODO: Upgrade path.
-    # I need to comment the upghrade path until we have a first release.
-    # Comment for the future me: 
-    #     This also failed because the port was used: set a strategy to recreate.
-    #- name: Test charts' upgrade path
-    #  run: ct --config .github/ct.yaml install --upgrade --all
+      # TODO: Upgrade path.
+      # I need to comment the upghrade path until we have a first release.
+      # Comment for the future me:
+      #     This also failed because the port was used: set a strategy to recreate.
+      #- name: Test charts' upgrade path
+      #  run: ct --config .github/ct.yaml install --upgrade --all
 
       # Install charts with the e2e values (tested also in lint-charts job)
       - name: Configure testing scenario
@@ -112,20 +113,20 @@ jobs:
 
       # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
       # for powerdns to startup and for external-dns to have to to run (at least) 3 times
-      - name: Wait 40 seconds for everything to settle
-        run: sleep 40
+      - name: Wait 30 seconds for everything to settle
+        run: sleep 30
 
       # Begin e2e test.
       - name: Basic tests that are not e2e but allow me to test the CI
         run: |
           ip=$(minikube ip)
           
-          kubectl -n e2e-staless-dns get pods || true
+          kubectl -n e2e-staless-dns get pods
           
-          curl $ip:80 || true
+          curl -v "http://$ip" > /dev/null
           
-          dig test.es @$ip || true
-          dig test.dev @$ip || true
+          dig test.es @$ip
+          dig test.dev @$ip
           
-          nslookup test.es $ip || true
-          nslookup test.dev $ip || true
+          nslookup test.es $ip
+          nslookup test.dev $ip
