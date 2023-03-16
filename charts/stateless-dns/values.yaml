@@ -160,6 +160,9 @@ pdns:
   # - --allow-notify-from=0.0.0.0/0,::/0
   # - --also-notify=192.0.2.1,203.0.113.167
 
+  # Extra config to include in pdns.conf.
+  extraConfig: ""
+
 zones: {}  # Declaration of the zones the DNS will have by default at startup time. This is the seed to create the zones so external-dns is able to populate them. See `values.yaml` for an example.
 # test.es: |
 #   $ORIGIN .
