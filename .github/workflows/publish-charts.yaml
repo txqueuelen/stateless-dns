@@ -22,7 +22,7 @@ jobs:
             --password-stdin
       - name: Helm package
         run: |
-          helm package . -u --version "${GITHUB_REF_NAME#v}"
+          helm package charts/stateless-dns -u --version "${GITHUB_REF_NAME#v}"
       - name: Helm push
         run: |
           helm push \
