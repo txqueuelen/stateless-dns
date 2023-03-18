@@ -26,5 +26,5 @@ jobs:
       - name: Helm push
         run: |
           helm push \
-          "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}-${GITHUB_REF_NAME#v}.tgz" \
+          "stateless-dns-${GITHUB_REF_NAME#v}.tgz" \
           "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/charts"
