@@ -38,6 +38,16 @@
       ],
       "groupName": "Kubernetes related testing dependencies",
       "groupSlug": "kubernetes-ci"
+    },
+    {
+      // Group all debian images together.
+      "matchDepPatterns": [
+        "debian"
+      ],
+      "matchPaths": [
+        "/Dockerfile"
+      ],
+      "groupName": "Debian base images",
     }
   ]
 }
