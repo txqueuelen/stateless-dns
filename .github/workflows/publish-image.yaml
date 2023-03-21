@@ -31,7 +31,7 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/powerdns:${{ steps.tag.outputs.bare }}
-            ghcr.io/${{ github.repository }}/powerdns:${{ steps.tag.outputs.full }}
+            ghcr.io/${{ github.repository }}/powerdns:v${{ steps.tag.outputs.bare }}
+            ghcr.io/${{ github.repository }}/powerdns:v${{ steps.tag.outputs.full }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
