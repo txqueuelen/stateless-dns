@@ -52,7 +52,7 @@ spec:
       {{- end }}
       containers:
         - name: pdns
-          image: "{{ .Values.pdns.registry }}/{{ .Values.pdns.repository }}:{{ .Values.pdns.tag }}"
+          image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
           imagePullPolicy: {{ .Values.pdns.pullPolicy }}
           {{- with .Values.pdns.securityContext }}
           securityContext:

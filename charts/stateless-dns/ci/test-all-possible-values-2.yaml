@@ -80,9 +80,11 @@ externalDNS:
   nameOverride: ""
   fullnameOverride: ""
 
-  registry: registry.k8s.io
-  repository: external-dns/external-dns
-  tag: v0.13.1
+  image:
+    registry: registry.k8s.io
+    repository: external-dns/external-dns
+    tag: v0.13.1
+
   pullPolicy: IfNotPresent
 
   securityContext:
@@ -131,9 +133,11 @@ pdns:
   nameOverride: ""
   fullnameOverride: ""
 
-  registry: ghcr.io
-  repository: txqueuelen/stateless-dns
-  tag: ci  # We are going to test always with the version built or the latest stable
+  image:
+    registry: ghcr.io
+    repository: txqueuelen/stateless-dns
+    tag: ci  # We are going to test always with the version built or the latest stable
+
   pullPolicy: IfNotPresent
 
   securityContext:
