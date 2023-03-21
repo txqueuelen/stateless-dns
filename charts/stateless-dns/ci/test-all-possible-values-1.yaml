@@ -135,7 +135,7 @@ pdns:
 
   image:
     registry: ghcr.io
-    repository: txqueuelen/stateless-dns
+    repository: txqueuelen/stateless-dns/powerdns
     tag: ci  # We are going to test always with the version built or the latest stable
 
   pullPolicy: IfNotPresent
