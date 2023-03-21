@@ -120,13 +120,16 @@ jobs:
       - name: Basic tests that are not e2e but allow me to test the CI
         run: |
           ip=$(minikube ip)
+
+          errors=0
+          kubectl -n e2e-staless-dns get pods || ((errors++))
           
-          kubectl -n e2e-staless-dns get pods
+          curl -v "http://$ip" > /dev/null || ((errors++))
           
-          curl -v "http://$ip" > /dev/null
+          dig test.es @$ip || ((errors++))
+          dig test.dev @$ip || ((errors++))
           
-          dig test.es @$ip
-          dig test.dev @$ip
+          nslookup test.es $ip || ((errors++))
+          nslookup test.dev $ip || ((errors++))
           
-          nslookup test.es $ip
-          nslookup test.dev $ip
+          exit $errors
