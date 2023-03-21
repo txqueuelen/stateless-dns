@@ -1,0 +1,41 @@
+hostNetwork: true
+
+externalDNS:
+  sources:
+    - crd
+    - ingress
+    - service
+
+  logLevel: debug
+  logFormat: text
+  interval: 10s
+  triggerLoopOnEvent: true
+  policy: sync
+
+pdns:
+  # We are going to test always with the version built or the latest stable
+  registry: ci.local
+  tag: ci
+
+  apiKeySecret:
+    create: true
+    valuePlain: a-testing-apikey
+  extraArgs:
+    # In case something fails, we are not blind.
+    - --loglevel=7
+    - --log-dns-queries=yes
+zones:
+  test.es: |
+    $ORIGIN .
+    test.es     300  IN SOA  ns1.test.es sysadmin.test.es 1 600 600 86400 300
+    test.es     300  IN NS	 ns1.test.es
+    test.es     300  IN NS	 ns2.test.es
+    ns1.test.es 300  IN A    1.1.1.1
+    test.es     300  IN A    1.1.1.2
+  test.dev: |
+    $ORIGIN .
+    test.dev     300  IN SOA  ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+    test.dev     300  IN NS	  ns1.test.dev
+    test.dev     300  IN NS	  ns2.test.dev
+    ns1.test.dev 300  IN A    2.2.2.1
+    test.dev     300  IN A    2.2.2.2

@@ -3,41 +3,8 @@ name: Lint and test PR
 on: pull_request
 
 jobs:
-  need-test:
-    runs-on: ubuntu-latest
-    outputs:
-      charts: ${{ steps.list-changed.outputs.changed }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: helm/chart-testing-action@v2.3.1
-      - id: list-changed
-        run: |
-          changed=$(ct --config .github/ct.yaml list-changed)
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
-  lint-chart:
-    runs-on: ubuntu-latest
-    needs: need-test
-    if: ${{ needs.need-test.outputs.charts == 'true' }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: helm/chart-testing-action@v2.3.1
-      - run: helm plugin install https://github.com/helm-unittest/helm-unittest
-      - uses: manusa/actions-setup-minikube@v2.7.2
-        with:
-          minikube version: v1.29.0
-          kubernetes version: v1.25.0
-          github token: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: ct --config .github/ct.yaml lint --debug
-
   docker-build:
+    name: Build Docker image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,6 +13,120 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v4
         with:
-          tags: ${{ github.repository }}-ci
+          tags: ci.local/${{ github.repository }}:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  chart-lint:
+    name: Lint Helm charts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install helm/chart-testing
+        uses: helm/chart-testing-action@v2.3.1
+      - name: Lint charts
+        run: ct --config .github/ct.yaml lint --all
+
+  chart-unittest:
+    name: Unit test Helm charts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+      - name: Run unit tests
+        run: |
+          for chart in charts/*; do
+            if [ -d "$chart/tests/" ]; then
+              helm unittest $chart -3
+            else
+              echo "::warning file=$chart,title=Skipping unit test for $chart::$chart does not have a tests/ folder"
+            fi
+          done
+
+  chart-install:
+    name: Installation test for Helm charts
+    runs-on: ubuntu-latest
+    needs:
+      # Reuse image cache:
+      - docker-build
+      # This test is expensive so only run it when cheap tests pass:
+      - chart-lint
+      - chart-unittest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v4
+        with:
+          load: true  # Bring image to the host so we can minikube load it later.
+          tags: ci.local/${{ github.repository }}:ci
+          cache-from: type=gha
+          # No need to push anything to cache here.
+
+      # Install Minikube to test chart installation
+      - name: Install Minikube
+        uses: manusa/actions-setup-minikube@v2.7.2
+        with:
+          minikube version: v1.29.0
+          kubernetes version: v1.26.0
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker
+          start args: "--container-runtime=containerd"
+      # Test chart installation with a stable image.
+      - name: Load image into minikube
+        run: |
+          minikube image load ci.local/${{ github.repository }}:ci
+
+      - name: Install helm/chart-testing
+        uses: helm/chart-testing-action@v2.3.1
+      - name: Test charts' installation path
+        run: |
+          ct install --all \
+          --config .github/ct.yaml \
+          --helm-extra-args "--timeout 1m"
+
+      # TODO: Upgrade path.
+      # I need to comment the upghrade path until we have a first release.
+      # Comment for the future me:
+      #     This also failed because the port was used: set a strategy to recreate.
+      #- name: Test charts' upgrade path
+      #  run: ct --config .github/ct.yaml install --upgrade --all
+
+      # Install charts with the e2e values (tested also in lint-charts job)
+      - name: Configure testing scenario
+        run: |
+          for CHART in charts/*; do
+            helm upgrade --install \
+              "$(basename $CHART)" "$CHART" \
+              --create-namespace --namespace e2e-staless-dns \
+              --values "$CHART/ci/e2e-values.yaml" \
+              --wait --timeout 60s
+          done
+
+      # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
+      # for powerdns to startup and for external-dns to have to to run (at least) 3 times
+      - name: Wait 30 seconds for everything to settle
+        run: sleep 30
+
+      # Begin e2e test.
+      - name: Basic tests that are not e2e but allow me to test the CI
+        run: |
+          ip=$(minikube ip)
+          
+          kubectl -n e2e-staless-dns get pods
+          
+          curl -v "http://$ip" > /dev/null
+          
+          dig test.es @$ip
+          dig test.dev @$ip
+          
+          nslookup test.es $ip
+          nslookup test.dev $ip
