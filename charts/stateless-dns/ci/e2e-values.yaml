@@ -13,9 +13,10 @@ externalDNS:
   policy: sync
 
 pdns:
-  # We are going to test always with the version built or the latest stable
-  registry: ci.local
-  tag: ci
+  image:
+    # We are going to test always with the version built or the latest stable
+    registry: ci.local
+    tag: ci
 
   apiKeySecret:
     create: true

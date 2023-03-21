@@ -51,7 +51,7 @@ spec:
       {{- end }}
       containers:
         - name: external-dns
-          image: "{{ .Values.externalDNS.registry }}/{{ .Values.externalDNS.repository }}:{{ .Values.externalDNS.tag }}"
+          image: "{{ .Values.externalDNS.image.registry }}/{{ .Values.externalDNS.image.repository }}:{{ .Values.externalDNS.image.tag }}"
           imagePullPolicy: {{ .Values.externalDNS.pullPolicy }}
           {{- with .Values.externalDNS.securityContext }}
           securityContext:
