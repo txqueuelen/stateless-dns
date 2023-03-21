@@ -1,8 +1,8 @@
 name: Release tagged image
 
 on:
-  release:
-    types: [ released ]
+  push:
+    branches: [ main ]
 
 jobs:
   release:
@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Extract PowerDNS version
+        id: version
+        run: |
+          echo "powerdns=$(sed -nr 's/^ARG PDNS_VERSION=(.*)$/\1/p' Dockerfile)" >> "$GITHUB_OUTPUT"
+      - name: Generate tag
+        id: tag
+        run: |
+          echo "bare=${{ steps.version.outputs.powerdns }}" >> "$GITHUB_OUTPUT"
+          echo "full=${{ steps.version.outputs.powerdns }}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -22,7 +31,6 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}/powerdns:${{ steps.tag.outputs.bare }}
+            ghcr.io/${{ github.repository }}/powerdns:${{ steps.tag.outputs.full }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
