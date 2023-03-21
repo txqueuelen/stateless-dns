@@ -125,8 +125,8 @@ pdns:
   fullnameOverride: ""  # String to override the name of the objects created.
 
   registry: ghcr.io  # Image registry
-  repository: txqueuelen/pdns-stateless  # Image repository
-  tag: v4.4  # Image tag
+  repository: txqueuelen/stateless-dns  # Image repository
+  tag: v4.5.3  # Image tag
   pullPolicy: IfNotPresent  # Image pull policy.
 
   securityContext:
@@ -159,6 +159,9 @@ pdns:
   extraArgs: []  # Extra args to add to PowerDNS. When adding arguments, take into account that launch, gsqlite3-database, webserver, webserver-address, webserver-port, api, api-key are managed by this chart.
   # - --allow-notify-from=0.0.0.0/0,::/0
   # - --also-notify=192.0.2.1,203.0.113.167
+
+  # Extra config to include in pdns.conf.
+  extraConfig: ""
 
 zones: {}  # Declaration of the zones the DNS will have by default at startup time. This is the seed to create the zones so external-dns is able to populate them. See `values.yaml` for an example.
 # test.es: |

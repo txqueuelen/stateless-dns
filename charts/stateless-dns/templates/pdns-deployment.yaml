@@ -23,7 +23,8 @@ spec:
     metadata:
       annotations:
         checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum | bcrypt | quote }}
-        checksum/zones: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/zones: {{ include (print $.Template.BasePath "/zones-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/config-configmap.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -62,17 +63,9 @@ spec:
             - /entrypoint/script
             - /usr/local/sbin/pdns_server
           args:
-            - --launch=gsqlite3
-            - --gsqlite3-database=$(DATABASE_PATH)
-
             {{- if .Values.service.api.enabled }}
-            - --webserver=yes
-            - --webserver-address=0.0.0.0
-            - --webserver-port={{ .Values.service.api.port }}
-            - --api=yes
             - --api-key=$(POWERDNS_API_KEY)
             {{- end }}
-
             {{- range $arg := .Values.pdns.extraArgs }}
             - {{ $arg }}
             {{- end }}
@@ -81,12 +74,12 @@ spec:
             {{- if .Values.service.dnsTcp.enabled }}
             - name: dns-tcp
               protocol: TCP
-              containerPort: 53
+              containerPort: {{ .Values.service.dnsTcp.port }}
             {{- end }}
             {{- if .Values.service.dnsUdp.enabled }}
             - name: dns-udp
               protocol: UDP
-              containerPort: 53
+              containerPort: {{ .Values.service.dnsUdp.port }}
             {{- end }}
             {{- if .Values.service.api.enabled }}
             - name: http
@@ -95,10 +88,6 @@ spec:
             {{- end }}
           {{- end }}
           env:
-            - name: "DATABASE_PATH"
-              # This hardcoded value is inside the emptyDir but set as a variable because it is used by
-              # the entrypoint script to know where it should place the sqlite database.
-              value: /data/db
             - name: "POWERDNS_API_KEY"
               valueFrom:
                 secretKeyRef:
@@ -107,6 +96,9 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: data
+            - mountPath: /usr/local/etc/pdns.conf
+              name: config
+              subPath: pdns.conf
             - mountPath: /zones
               name: zones
           resources:
@@ -114,10 +106,12 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "stateless-dns.fullname" . }}-config
         - name: zones
           configMap:
-            name: {{ include "stateless-dns.fullname" . }}
-
+            name: {{ include "stateless-dns.fullname" . }}-zones
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

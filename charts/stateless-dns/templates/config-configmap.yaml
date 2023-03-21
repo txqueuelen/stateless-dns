@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "stateless-dns.fullname" . }}-config
+  labels:
+    {{- include "stateless-dns.labels" . | nindent 4 }}
+data:
+  pdns.conf: |
+    launch=gsqlite3
+    gsqlite3-database=/data/db.sqlite
+    {{- if or .Values.service.dnsTcp.enabled .Values.service.dnsUdp.enabled }}
+      {{- if and .Values.service.dnsTcp.enabled .Values.service.dnsUdp.enabled }}
+        {{- if not (eq .Values.service.dnsTcp.port .Values.service.dnsUdp.port) }}
+          {{- fail ".Values.service.dnsTcp.port .Values.service.dnsUdp.port must be equal" }}
+        {{- end }}
+      {{- end }}
+    local-port={{ .Values.service.dnsTcp.port }}
+    {{- end }}
+
+    {{- if .Values.service.api.enabled }}
+    webserver=yes
+    webserver-address=0.0.0.0
+    webserver-port={{ .Values.service.api.port }}
+    webserver-allow-from=0.0.0.0/0
+    api=yes
+    {{- end }}
+
+    {{- with .Values.pdns.extraConfig }}
+    {{- . | nindent 4}}
+    {{- end }}

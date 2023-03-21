@@ -10,4 +10,4 @@ maintainers:
 
 type: application
 
-version: 0.0.0  # To be changed by CI and release-toolkit
+version: 0.0.1  # To be changed by CI and release-toolkit
