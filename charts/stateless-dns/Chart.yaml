@@ -10,4 +10,6 @@ maintainers:
 
 type: application
 
-version: 0.0.1  # To be changed by CI and release-toolkit
+# This version is ignored. The publish-chart workflow sets this to the tag being released using `helm package`.
+# Please refer to git tags or GitHub releases to check the version of this chart.
+version: 0.0.0
