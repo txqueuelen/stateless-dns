@@ -16,7 +16,7 @@ spec:
   ports:
     - port: {{ .Values.service.dnsUdp.port }}
       targetPort: dns-udp
-      protocol: TCP
+      protocol: UDP
       name: dns
   selector:
     {{- include "pdns.selectorLabels" . | nindent 4 }}
