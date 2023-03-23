@@ -12,7 +12,7 @@ RUN ./configure --with-modules='bind gsqlite3' && \
     make install
 RUN mkdir -p /usr/local/share/pdns && cp modules/gsqlite3backend/schema.sqlite3.sql /usr/local/share/pdns/schema.sqlite3.sql
 
-FROM debian:11-slim@sha256:403e06393d6b9dcb506eeef2adba9e30a97139c54e4c90d55254049f7d224081
+FROM debian:11-slim@sha256:f7d141c1ec6af549958a7a2543365a7829c2cdc4476308ec2e182f8a7c59b519
 
 RUN apt update && apt install -y curl sqlite3 luajit libboost-dev libboost-program-options-dev && apt clean
 
