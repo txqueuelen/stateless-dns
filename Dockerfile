@@ -1,4 +1,4 @@
-FROM debian:11@sha256:6f1f698e20c8ae73b110eb614a2c6d13fbdb504bbbbcf2965c4d0b80b7bb7fb1 as builder
+FROM debian:11@sha256:d0bf7d85ad1e61ab3520b1d22d1e2a136799defd4e0d1e3f998d3b9045f38551 as builder
 ARG PDNS_VERSION=4.7.3
 
 WORKDIR /build
