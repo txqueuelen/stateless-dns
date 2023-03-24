@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install helm/chart-testing
-        uses: helm/chart-testing-action@v2.3.1
+        uses: helm/chart-testing-action@v2.4.0
       - name: Lint charts
         run: ct --config .github/ct.yaml lint --all
 
@@ -86,7 +86,7 @@ jobs:
           minikube image load ci.local/${{ github.repository }}/powerdns:ci
 
       - name: Install helm/chart-testing
-        uses: helm/chart-testing-action@v2.3.1
+        uses: helm/chart-testing-action@v2.4.0
       - name: Test charts' installation path
         run: |
           ct install --all \
