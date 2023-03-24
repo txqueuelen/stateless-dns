@@ -40,11 +40,11 @@
     },
     {
       // Group all debian images together.
-      "matchDepPatterns": [
+      "matchPackagePatterns": [
         "debian"
       ],
       "matchPaths": [
-        "/Dockerfile"
+        "Dockerfile"
       ],
       "groupName": "Debian base images",
     }
