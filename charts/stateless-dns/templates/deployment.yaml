@@ -42,13 +42,16 @@ spec:
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
-      {{- with .Values.dnsPolicy }}
-      dnsPolicy: {{ . }}
-      {{- end }}
       {{- with .Values.hostNetwork }}
       hostNetwork: {{ . }}
       {{- end }}
+      {{- if and .Values.hostNetwork (not .Values.dnsPolicy) }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
       containers:
+        {{- /* Power DNS container */}}
         - name: pdns
           image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
           imagePullPolicy: {{ .Values.pdns.pullPolicy }}
@@ -67,6 +70,12 @@ spec:
             {{- range $arg := .Values.pdns.extraArgs }}
             - {{ $arg }}
             {{- end }}
+          env:
+            - name: "POWERDNS_API_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "stateless-dns.secret.name" . }}
+                  key: {{ include "stateless-dns.secret.key" . }}
           {{- if or .Values.service.api.enabled .Values.service.dnsUdp.enabled .Values.service.dnsTcp.enabled }}
           ports:
             {{- if .Values.service.dnsTcp.enabled }}
@@ -85,12 +94,8 @@ spec:
               containerPort: {{ .Values.service.api.port }}
             {{- end }}
           {{- end }}
-          env:
-            - name: "POWERDNS_API_KEY"
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "stateless-dns.secret.name" . }}
-                  key: {{ include "stateless-dns.secret.key" . }}
+          resources:
+            {{- toYaml .Values.pdns.resources | nindent 12 }}
           volumeMounts:
             - mountPath: /data
               name: data
@@ -99,8 +104,71 @@ spec:
               subPath: pdns.conf
             - mountPath: /zones
               name: zones
+
+
+        {{- /* external-dns container */}}
+        - name: external-dns
+          image: "{{ .Values.externalDNS.image.registry }}/{{ .Values.externalDNS.image.repository }}:{{ .Values.externalDNS.image.tag }}"
+          imagePullPolicy: {{ .Values.externalDNS.pullPolicy }}
+          {{- with .Values.externalDNS.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - --log-level={{ .Values.externalDNS.logLevel }}
+            - --log-format={{ .Values.externalDNS.logFormat }}
+
+            - --interval={{ .Values.externalDNS.interval }}
+            {{- if .Values.externalDNS.triggerLoopOnEvent }}
+            - --events
+            {{- end }}
+
+            {{- range .Values.externalDNS.sources }}
+            - --source={{ . }}
+            {{- end }}
+            {{- range $zonename, $zonefile := .Values.zones }}
+            - --domain-filter={{ $zonename }}
+            {{- end }}
+            {{- range .Values.externalDNS.managedRecordTypes }}
+            - --managed-record-types={{ . }}
+            {{- end }}
+
+            - --registry=txt
+            {{- with .Values.externalDNS.txtOwnerId }}
+            - --txt-owner-id={{ . }}
+            {{- end }}
+            {{- with .Values.externalDNS.txtPrefix }}
+            - --txt-prefix={{ . }}
+            {{- end }}
+            {{- with .Values.externalDNS.txtSuffix }}
+            - --txt-suffix={{ . }}
+            {{- end }}
+            {{- with .Values.externalDNS.txtWildcardReplacement }}
+            - --txt-wildcard-replacement={{ . }}
+            {{- end }}
+
+            - --provider=pdns
+            {{- if .Values.service.api.enabled }}
+            - --pdns-server=http://localhost:{{ .Values.service.api.port }}
+            {{- end }}
+            - --pdns-api-key=$(POWERDNS_API_KEY)
+
+            {{- range .Values.externalDNS.extraArgs }}
+            - {{ . }}
+            {{- end }}
+          env:
+            - name: "POWERDNS_API_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "stateless-dns.secret.name" . }}
+                  key: {{ include "stateless-dns.secret.key" . }}
+          ports:
+            - name: edns-metrics
+              protocol: TCP
+              containerPort: 7979
           resources:
-            {{- toYaml .Values.pdns.resources | nindent 12 }}
+            {{- toYaml .Values.externalDNS.resources | nindent 12 }}
+
       volumes:
         - name: data
           emptyDir: {}
@@ -110,6 +178,8 @@ spec:
         - name: zones
           configMap:
             name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "zones" ) }}
+
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

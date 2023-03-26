@@ -87,9 +87,9 @@ spec:
   type: {{ .Values.service.externalDNSMetrics.type }}
   ports:
     - port: {{ .Values.service.externalDNSMetrics.port }}
-      targetPort: metrics-http
+      targetPort: edns-metrics
       protocol: TCP
-      name: metrics-http
+      name: edns-metrics
   selector:
     {{- include "stateless-dns.selectorLabels" . | nindent 4 }}
 {{- end }}
