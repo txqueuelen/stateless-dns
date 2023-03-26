@@ -111,6 +111,29 @@ jobs:
               --wait --timeout 60s
           done
 
+      - name: Create example service
+        run: |
+          cat > service.yaml <<EOF
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ci
+            namespace: ci
+            annotations:
+              external-dns.alpha.kubernetes.io/hostname: ci.test.dev
+          spec:
+            type: LoadBalancer
+            externalIPs:
+              - 1.2.3.4
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+          EOF
+          
+          kubectl create ns ci && kubectl apply -f service.yaml
+
       # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
       # for powerdns to startup and for external-dns to have to to run (at least) 3 times
       - name: Wait 30 seconds for everything to settle
@@ -126,10 +149,8 @@ jobs:
           
           curl -v "http://$ip" > /dev/null || ((errors++))
           
-          dig test.es @$ip || ((errors++))
-          dig test.dev @$ip || ((errors++))
-          
-          nslookup test.es $ip || ((errors++))
-          nslookup test.dev $ip || ((errors++))
+          dig test.es @$ip     | grep -e '1.1.1.2' || ((errors++))
+          dig test.dev @$ip    | grep -e '2.2.2.2' || ((errors++))
+          dig ci.test.dev @$ip | grep -e '1.2.3.4' || ((errors++))
           
           exit $errors
