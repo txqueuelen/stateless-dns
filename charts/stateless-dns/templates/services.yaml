@@ -8,7 +8,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}-udp
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "udp" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -19,7 +19,7 @@ spec:
       protocol: UDP
       name: dns
   selector:
-    {{- include "pdns.selectorLabels" . | nindent 4 }}
+    {{- include "stateless-dns.selectorLabels" . | nindent 4 }}
 {{- end }}
 
 
@@ -32,7 +32,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}-tcp
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "tcp" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -43,7 +43,7 @@ spec:
       protocol: TCP
       name: dns
   selector:
-    {{- include "pdns.selectorLabels" . | nindent 4 }}
+    {{- include "stateless-dns.selectorLabels" . | nindent 4 }}
 {{- end }}
 
 
@@ -56,7 +56,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}-http
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "http" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -67,7 +67,7 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "pdns.selectorLabels" . | nindent 4 }}
+    {{- include "stateless-dns.selectorLabels" . | nindent 4 }}
 {{- end }}
 
 
@@ -80,7 +80,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}-edns-metrics
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "edns-metrics") }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -91,5 +91,5 @@ spec:
       protocol: TCP
       name: metrics-http
   selector:
-    {{- include "pdns.selectorLabels" . | nindent 4 }}
+    {{- include "stateless-dns.selectorLabels" . | nindent 4 }}
 {{- end }}

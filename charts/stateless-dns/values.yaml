@@ -70,9 +70,6 @@ ingress:
   #      - chart-example.local
 
 externalDNS:
-  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
-  fullnameOverride: ""  # String to override the name of the objects created.
-
   image:
     registry: registry.k8s.io  # Image registry
     repository: external-dns/external-dns  # Image repository
@@ -139,9 +136,6 @@ externalDNS:
   extraArgs: []
 
 pdns:
-  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
-  fullnameOverride: ""  # String to override the name of the objects created.
-
   image:
     registry: ghcr.io  # Image registry
     repository: txqueuelen/stateless-dns/powerdns  # Image repository
@@ -179,8 +173,10 @@ pdns:
   # - --allow-notify-from=0.0.0.0/0,::/0
   # - --also-notify=192.0.2.1,203.0.113.167
 
-  # Extra config to include in pdns.conf.
-  extraConfig: ""
+  extraConfig: {}  # Extra config to include in pdns.conf.
+  # allow-notify-from: "0.0.0.0/0,::/0"
+  # also-notify: "192.0.2.1,203.0.113.167"
+
 
 zones: {}  # Declaration of the zones the DNS will have by default at startup time. This is the seed to create the zones so external-dns is able to populate them. See `values.yaml` for an example.
 # test.es: |

@@ -25,6 +25,10 @@ pdns:
     # In case something fails, we are not blind.
     - --loglevel=7
     - --log-dns-queries=yes
+  extraConfig:
+    # In case something fails, we are not blind.
+    loglevel: "7"
+    log-dns-queries: "yes"
 zones:
   test.es: |
     $ORIGIN .

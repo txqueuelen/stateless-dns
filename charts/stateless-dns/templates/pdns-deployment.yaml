@@ -5,16 +5,15 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "pdns.fullname" . }}
+  name: {{ include "stateless-dns.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
-    {{- include "pdns.selectorLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "pdns.selectorLabels" . | nindent 6 }}
+      {{- include "stateless-dns.selectorLabels" . | nindent 6 }}
   {{- with .Values.deploymentStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
@@ -30,7 +29,6 @@ spec:
         {{- end }}
       labels:
         {{- include "stateless-dns.labels" . | nindent 8 }}
-        {{- include "pdns.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -91,8 +89,8 @@ spec:
             - name: "POWERDNS_API_KEY"
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pdns.secret.name" . }}
-                  key: {{ include "pdns.secret.key" . }}
+                  name: {{ include "stateless-dns.secret.name" . }}
+                  key: {{ include "stateless-dns.secret.key" . }}
           volumeMounts:
             - mountPath: /data
               name: data
@@ -108,10 +106,10 @@ spec:
           emptyDir: {}
         - name: config
           configMap:
-            name: {{ include "stateless-dns.fullname" . }}-config
+            name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "config" ) }}
         - name: zones
           configMap:
-            name: {{ include "stateless-dns.fullname" . }}-zones
+            name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "zones" ) }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
