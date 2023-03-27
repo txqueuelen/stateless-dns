@@ -93,42 +93,38 @@ jobs:
           --config .github/ct.yaml \
           --helm-extra-args "--timeout 1m"
 
-      # TODO: Upgrade path.
-      # I need to comment the upghrade path until we have a first release.
-      # Comment for the future me:
-      #     This also failed because the port was used: set a strategy to recreate.
-      #- name: Test charts' upgrade path
-      #  run: ct --config .github/ct.yaml install --upgrade --all
-
       # Install charts with the e2e values (tested also in lint-charts job)
       - name: Configure testing scenario
         run: |
           for CHART in charts/*; do
-            helm upgrade --install \
-              "$(basename $CHART)" "$CHART" \
-              --create-namespace --namespace e2e-staless-dns \
-              --values "$CHART/ci/e2e-values.yaml" \
-              --wait --timeout 60s
+            if [ -f "$CHART/ci/e2e-values.yaml" ]; then
+              helm upgrade --install \
+                "$(basename $CHART)" "$CHART" \
+                --create-namespace --namespace e2e-staless-dns \
+                --values "$CHART/ci/e2e-values.yaml" \
+                --wait --timeout 60s
+            fi
           done
 
+          helm upgrade --install \
+            test-chart "testing/chart" \
+            --create-namespace --namespace e2e-staless-dns \
+            --wait --timeout 60s
+
+
       # In this first iteration, readineess probes may not be reliable.
-      - name: Wait 10 seconds for everything to settle
-        run: sleep 10
+      - name: Wait 5 seconds for everything to settle
+        run: sleep 5
 
       # Begin e2e test.
-      - name: Basic tests that are not e2e but allow me to test the CI
+      - name: Testing e2e
         run: |
-          ip=$(minikube ip)
-
+          IP=$(minikube ip)
           errors=0
-          kubectl -n e2e-staless-dns get pods || ((errors++))
-          
-          curl -v "http://$ip" > /dev/null || ((errors++))
-          
-          dig test.es @$ip || ((errors++))
-          dig test.dev @$ip || ((errors++))
-          
-          nslookup test.es $ip || ((errors++))
-          nslookup test.dev $ip || ((errors++))
+
+          for TEST in testing/*.sh; do
+            echo "Running tests for $(basename $TEST)"
+            bash "$TEST" $IP || ((errors++))
+          done
           
           exit $errors

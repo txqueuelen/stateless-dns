@@ -22,9 +22,6 @@ podSecurityContext:
 
 deploymentStrategy:
   type: RollingUpdate
-  rollingUpdate:
-    maxSurge: 3
-    maxUnavailable: 2
 
 priorityClassName: system-node-critical
 

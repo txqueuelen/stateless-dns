@@ -1,0 +1,39 @@
+{{- range $domain, $target := .Values.testTypeNS }}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: {{ printf "%s-%s-A" $domain $target | lower | trunc 63 | trimSuffix "-" }}
+spec:
+  endpoints:
+    - dnsName: {{ $domain }}
+      recordTTL: 180
+      recordType: A
+      targets:
+        - {{ $target }}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: {{ printf "%s-%s-NS" $domain $target | lower | trunc 63 | trimSuffix "-" }}
+spec:
+  endpoints:
+    - dnsName: {{ rest ( regexSplit "\\." $domain -1 ) | join "." }}
+      recordTTL: 180
+      recordType: NS
+      targets:
+        {{- /*
+          If you put '.' at the end we are going to have lots of warnings from edns:
+
+          external-dns log:
+            level=warning msg="Endpoint ns1.test.es-1.1.2.1-ns with DNSName test.es has an illegal target. The subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com')"
+          
+          If you don't put a '.' at the end, the payload will not have the trailing '.' that pdns needs and PDNS will reject the entry:
+          
+          pdns response to edns:
+            {
+              "error": "Record test.es./NS 'ns1.test.es': Not in expected format (parsed as 'ns1.test.es.')"
+            }
+        */}}
+        - {{ $domain | trimSuffix "." }}.
+{{- end }}

@@ -1,4 +1,6 @@
 hostNetwork: true
+deploymentStrategy:
+  type: Recreate
 
 externalDNS:
   sources:
@@ -8,9 +10,10 @@ externalDNS:
 
   logLevel: debug
   logFormat: text
-  interval: 10s
+  interval: 5s
   triggerLoopOnEvent: true
   policy: sync
+  txtPrefix: "in%{record_type}.stateless-dns."
 
 pdns:
   image:
@@ -32,15 +35,9 @@ pdns:
 zones:
   test.es: |
     $ORIGIN .
-    test.es     300  IN SOA  ns1.test.es sysadmin.test.es 1 600 600 86400 300
-    test.es     300  IN NS	 ns1.test.es
-    test.es     300  IN NS	 ns2.test.es
-    ns1.test.es 300  IN A    1.1.1.1
-    test.es     300  IN A    1.1.1.2
+    test.es        300  IN SOA  ns1.test.es sysadmin.test.es 1 600 600 86400 300
+    static.test.es 300  IN A    1.1.1.1
   test.dev: |
     $ORIGIN .
-    test.dev     300  IN SOA  ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
-    test.dev     300  IN NS	  ns1.test.dev
-    test.dev     300  IN NS	  ns2.test.dev
-    ns1.test.dev 300  IN A    2.2.2.1
-    test.dev     300  IN A    2.2.2.2
+    test.dev        300  IN SOA  ns1.test.dev sysadmin.test.dev 1 600 600 86400 300
+    static.test.dev 300  IN A    2.1.1.1

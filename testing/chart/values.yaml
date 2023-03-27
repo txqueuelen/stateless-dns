@@ -1,0 +1,27 @@
+testTypeA:
+  test01.test.es:
+    - "1.1.1.1"
+    - "1.1.1.2"
+    - "1.1.1.3"
+  test01.test.dev:
+    - "2.1.1.1"
+    - "2.1.1.2"
+    - "2.1.1.3"
+
+testTypeNS:
+  ns1.test.es: "1.1.2.1"
+  ns2.test.es: "1.1.2.2"
+  ns3.test.es: "1.1.2.3"
+
+  ns1.test.dev: "2.1.2.1"
+  ns2.test.dev: "2.1.2.2"
+  ns3.test.dev: "2.1.2.3"
+
+testIngress: {}
+#  ns1.test.es: "1.1.2.1"
+#  ns2.test.es: "1.1.2.2"
+#  ns3.test.es: "1.1.2.3"
+#
+#  ns1.test.dev: "2.1.2.1"
+#  ns2.test.dev: "2.1.2.2"
+#  ns3.test.dev: "2.1.2.3"
