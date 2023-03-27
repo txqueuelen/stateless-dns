@@ -24,6 +24,7 @@ data:
     webserver-port={{ .Values.service.api.port }}
     webserver-allow-from=0.0.0.0/0
     api=yes
+    default-soa-edit=INCEPTION-INCREMENT
     {{- end }}
 
     {{- range $key, $value := .Values.pdns.extraConfig }}

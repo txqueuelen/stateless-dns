@@ -111,10 +111,9 @@ jobs:
               --wait --timeout 60s
           done
 
-      # In this first iteration, readineess probes may not be reliable. Here the CI will wait enough
-      # for powerdns to startup and for external-dns to have to to run (at least) 3 times
-      - name: Wait 30 seconds for everything to settle
-        run: sleep 30
+      # In this first iteration, readineess probes may not be reliable.
+      - name: Wait 10 seconds for everything to settle
+        run: sleep 10
 
       # Begin e2e test.
       - name: Basic tests that are not e2e but allow me to test the CI

@@ -17,11 +17,11 @@ FROM debian:11-slim@sha256:f7d141c1ec6af549958a7a2543365a7829c2cdc4476308ec2e182
 RUN apt update && apt install -y curl sqlite3 luajit libboost-dev libboost-program-options-dev && apt clean
 
 # REMINDER: .dockerignore defaults to exclude everything. Add exceptions to be copied there.
-ADD entrypoint.sh /entrypoint/script
+ADD zone-populator.sh /usr/local/bin/zone-populator.sh
 
 COPY --from=builder /usr/local /usr/local
 
 EXPOSE 53 53/udp
 
-ENTRYPOINT [ "/bin/bash", "/entrypoint/script" ]
-CMD [ "/usr/local/sbin/pdns_server" ]
+ENTRYPOINT [ "/usr/local/sbin/pdns_server" ]
+CMD []

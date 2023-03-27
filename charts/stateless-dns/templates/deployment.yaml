@@ -50,9 +50,9 @@ spec:
       {{- else if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
       {{- end }}
-      containers:
-        {{- /* Power DNS container */}}
-        - name: pdns
+
+      initContainers:
+        - name: pdns-zone-populator
           image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
           imagePullPolicy: {{ .Values.pdns.pullPolicy }}
           {{- with .Values.pdns.securityContext }}
@@ -61,8 +61,49 @@ spec:
           {{- end }}
           command:
             - /bin/bash
-            - /entrypoint/script
-            - /usr/local/sbin/pdns_server
+            - /usr/local/bin/zone-populator.sh
+          args:
+            {{- range $arg := .Values.pdns.extraArgs }}
+            - {{ $arg }}
+            {{- end }}
+          {{- if or .Values.service.api.enabled .Values.service.dnsUdp.enabled .Values.service.dnsTcp.enabled }}
+          ports:
+            {{- if .Values.service.dnsTcp.enabled }}
+            - name: dns-tcp
+              protocol: TCP
+              containerPort: {{ .Values.service.dnsTcp.port }}
+            {{- end }}
+            {{- if .Values.service.dnsUdp.enabled }}
+            - name: dns-udp
+              protocol: UDP
+              containerPort: {{ .Values.service.dnsUdp.port }}
+            {{- end }}
+            {{- if .Values.service.api.enabled }}
+            - name: http
+              protocol: TCP
+              containerPort: {{ .Values.service.api.port }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.pdns.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /usr/local/etc/pdns.conf
+              name: config
+              subPath: pdns.conf
+            - mountPath: /zones
+              name: zones
+
+      containers:
+        {{- /* Power DNS container */}}
+        - name: pdns-server
+          image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
+          imagePullPolicy: {{ .Values.pdns.pullPolicy }}
+          {{- with .Values.pdns.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args:
             {{- if .Values.service.api.enabled }}
             - --api-key=$(POWERDNS_API_KEY)
