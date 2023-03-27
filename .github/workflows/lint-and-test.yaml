@@ -149,8 +149,13 @@ jobs:
           
           curl -v "http://$ip" > /dev/null || ((errors++))
           
+          echo "Querying static test.es"
           dig test.es @$ip     | grep -e '1.1.1.2' || ((errors++))
+
+          echo "Querying static test.dev"
           dig test.dev @$ip    | grep -e '2.2.2.2' || ((errors++))
+
+          echo "Querying edns managed ci.test.dev"
           dig ci.test.dev @$ip | grep -e '1.2.3.4' || ((errors++))
           
           exit $errors
