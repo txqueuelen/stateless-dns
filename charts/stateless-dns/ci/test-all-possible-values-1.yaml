@@ -127,7 +127,10 @@ externalDNS:
   txtPrefix: "prefix-"  # txt-prefix and txt-suffix are mutual exclusive
   # txtSuffix: "-suffix"
   txtWildcardReplacement: "wildcard-"
-  managedRecordTypes: A,CNAME,NS
+  managedRecordTypes:
+    - A
+    - CNAME
+    - NS
 
 pdns:
   nameOverride: ""
