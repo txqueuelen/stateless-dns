@@ -120,7 +120,11 @@ externalDNS:
   txtPrefix: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. The TXT entry name will be the entry that is being created plus this prefix.
   txtSuffix: ""  # Same as above but TXT entries are decorated with a suffix instead of a prefix.
   txtWildcardReplacement: ""  # For more information on how TXT entries are created refer to the doc of `txtPrefix`. This is the prefix added to wildcard entries as they cannot be calculated.
-  managedRecordTypes: A,CNAME,NS  # Entry type that external-dns will be able to create in the provider.
+  # Entry types that external-dns will be able to create in the provider.
+  managedRecordTypes:
+    - A
+    - CNAME
+    - NS
 
 pdns:
   nameOverride: ""  # String to override the name of the objects created (will maintain the release name).

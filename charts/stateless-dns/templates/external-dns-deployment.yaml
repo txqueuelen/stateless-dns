@@ -72,7 +72,9 @@ spec:
             {{- range $zonename, $zonefile := .Values.zones }}
             - --domain-filter={{ $zonename }}
             {{- end }}
-            - --managed-record-types={{ .Values.externalDNS.managedRecordTypes }}
+            {{- range .Values.externalDNS.managedRecordTypes }}
+            - --managed-record-types={{ . }}
+            {{- end }}
  
             - --registry=txt
             {{- with .Values.externalDNS.txtOwnerId }}
