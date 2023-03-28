@@ -93,6 +93,10 @@ spec:
             - --provider=pdns
             - --pdns-server=http://{{ include "pdns.fullname" . }}-http
             - --pdns-api-key=$(POWERDNS_API_KEY)
+
+            {{- range .Values.externalDNS.extraArgs }}
+            - {{ . }}
+            {{- end }}
           ports:
             - name: metrics-http
               protocol: TCP
