@@ -132,6 +132,8 @@ externalDNS:
     - CNAME
     - NS
 
+  extraArgs: []
+
 pdns:
   nameOverride: ""
   fullnameOverride: ""

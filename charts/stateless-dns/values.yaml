@@ -126,6 +126,9 @@ externalDNS:
     - CNAME
     - NS
 
+  # Additional arguments to pass to the `external-dns` container.
+  extraArgs: []
+
 pdns:
   nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
   fullnameOverride: ""  # String to override the name of the objects created.
