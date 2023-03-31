@@ -116,8 +116,17 @@ externalDNS:
   interval: 30s  # The amount of time between external-dns runs.
   triggerLoopOnEvent: true  # Make external-dns to act by reacting to cluster events besides the polling with the interval above.
   policy: sync  # How DNS records are synchronized between sources and providers. sync will delete entries created by external-dns, it could also destroy entries that are not owner by external-dns if at some point it mark it as owned. upsert-only will create entries but will prevent the deletion of them.
-  txtOwnerId: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. This is an ID that will be added to that TXT entry.
-  txtPrefix: ""  # Each of the entris added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. The TXT entry name will be the entry that is being created plus this prefix.
+  txtOwnerId: ""  # Each of the entries added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. This is an ID that will be added to that TXT entry.
+  # Each of the entries added by external-dns will create a TXT entry in the DNS too to mark external-dns as it owner. The TXT entry name will be the entry that is being created plus this prefix.
+  # external-dns needs to add to the TXT registry the record type (A, NS, etc.) of the original record in order to have
+  # separate TXTs for different record types with the same name. If the special token `%{record_type}` is not specified
+  # in this prefix, external-dns will add it automatically to the domain name, e.g. `test-ns.local` for `test.local NS`.
+  # If this happens, PowerDNS would reject this record as it most likely will not have a zone for `test-ns.local`.
+  # For stateless-dns to work, this prefix must:
+  # 1. End with a dot (`.`), so all TXT records belong to the top level zone.
+  # 2. Contain the `%{record_type}` token before that dot.
+  # 3. Ensure a blank `%{record_type}` does not leave trailing or leading dots or dashes, or two consecutive dashes.
+  txtPrefix: "in%{record_type}.stateless-dns."
   txtSuffix: ""  # Same as above but TXT entries are decorated with a suffix instead of a prefix.
   txtWildcardReplacement: ""  # For more information on how TXT entries are created refer to the doc of `txtPrefix`. This is the prefix added to wildcard entries as they cannot be calculated.
   # Entry types that external-dns will be able to create in the provider.
