@@ -1,0 +1,16 @@
+{{- range $domain, $entry := .Values.testTypeA }}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: {{ $domain | lower | trunc 61 }}-a
+spec:
+  endpoints:
+    - dnsName: {{ $domain }}
+      recordTTL: 180
+      recordType: A
+      targets:
+        {{- range $target := $entry }}
+        - {{ $target }}
+        {{- end }}
+{{- end }}

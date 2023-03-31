@@ -26,6 +26,6 @@ data:
     api=yes
     {{- end }}
 
-    {{- with .Values.pdns.extraConfig }}
-    {{- . | nindent 4}}
-    {{- end }}
+    {{ range $key, $value := .Values.pdns.extraConfig }}
+    {{ printf "%s=%s" $key $value }}
+    {{ end }}
