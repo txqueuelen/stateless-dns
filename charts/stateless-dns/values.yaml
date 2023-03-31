@@ -125,7 +125,7 @@ externalDNS:
   # For stateless-dns to work, this prefix must:
   # 1. End with a dot (`.`), so all TXT records belong to the top level zone.
   # 2. Contain the `%{record_type}` token before that dot.
-  # 3. Ensure that a blank `%{record_type}` does not leave trailing or leading dots or dashes.
+  # 3. Ensure a blank `%{record_type}` does not leave trailing or leading dots or dashes, or two consecutive dashes.
   txtPrefix: "in%{record_type}.stateless-dns."
   txtSuffix: ""  # Same as above but TXT entries are decorated with a suffix instead of a prefix.
   txtWildcardReplacement: ""  # For more information on how TXT entries are created refer to the doc of `txtPrefix`. This is the prefix added to wildcard entries as they cannot be calculated.
