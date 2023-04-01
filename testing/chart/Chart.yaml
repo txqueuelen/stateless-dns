@@ -1,0 +1,12 @@
+apiVersion: v2
+name: test-chart
+description: A Helm chart for stateless-dns testing
+
+maintainers:
+- name: kang-makes
+  url: https://github.com/kang-makes
+- name: roobre
+  url: https://github.com/roobre
+
+type: application
+version: 0.1.0
