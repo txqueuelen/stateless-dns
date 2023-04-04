@@ -5,29 +5,30 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "external-dns.fullname" . }}
+  name: {{ include "stateless-dns.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
-    {{- include "external-dns.selectorLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "external-dns.selectorLabels" . | nindent 6 }}
+      {{- include "stateless-dns.selectorLabels" . | nindent 6 }}
   {{- with .Values.deploymentStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/apikey-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/zones: {{ include (print $.Template.BasePath "/zones-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/config-configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "stateless-dns.labels" . | nindent 8 }}
-        {{- include "external-dns.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -50,6 +51,7 @@ spec:
       dnsPolicy: {{ .Values.dnsPolicy }}
       {{- end }}
       containers:
+        # external-dns container
         - name: external-dns
           image: "{{ .Values.externalDNS.image.registry }}/{{ .Values.externalDNS.image.repository }}:{{ .Values.externalDNS.image.tag }}"
           imagePullPolicy: {{ .Values.externalDNS.pullPolicy }}
@@ -91,7 +93,10 @@ spec:
             {{- end }}
 
             - --provider=pdns
-            - --pdns-server=http://{{ include "pdns.fullname" . }}-http
+            {{- if .Values.service.api.enabled }}
+            - --pdns-server=http://localhost:{{ .Values.service.api.port }}
+            {{- end }}
+
             - --pdns-api-key=$(POWERDNS_API_KEY)
 
             {{- range .Values.externalDNS.extraArgs }}
@@ -109,6 +114,71 @@ spec:
                   key: {{ include "pdns.secret.key" . }}
           resources:
             {{- toYaml .Values.externalDNS.resources | nindent 12 }}
+
+        # PowerDNS container
+        - name: pdns
+          image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
+          imagePullPolicy: {{ .Values.pdns.pullPolicy }}
+          {{- with .Values.pdns.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - /entrypoint/script
+            - /usr/local/sbin/pdns_server
+          args:
+            {{- if .Values.service.api.enabled }}
+            - --api-key=$(POWERDNS_API_KEY)
+            {{- end }}
+            {{- range $arg := .Values.pdns.extraArgs }}
+            - {{ $arg }}
+            {{- end }}
+          {{- if or .Values.service.api.enabled .Values.service.dnsUdp.enabled .Values.service.dnsTcp.enabled }}
+          ports:
+            {{- if .Values.service.dnsTcp.enabled }}
+            - name: dns-tcp
+              protocol: TCP
+              containerPort: {{ .Values.service.dnsTcp.port }}
+            {{- end }}
+            {{- if .Values.service.dnsUdp.enabled }}
+            - name: dns-udp
+              protocol: UDP
+              containerPort: {{ .Values.service.dnsUdp.port }}
+            {{- end }}
+            {{- if .Values.service.api.enabled }}
+            - name: http
+              protocol: TCP
+              containerPort: {{ .Values.service.api.port }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: "POWERDNS_API_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pdns.secret.name" . }}
+                  key: {{ include "pdns.secret.key" . }}
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /usr/local/etc/pdns.conf
+              name: config
+              subPath: pdns.conf
+            - mountPath: /zones
+              name: zones
+          resources:
+            {{- toYaml .Values.pdns.resources | nindent 12 }}
+
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "stateless-dns.fullname" . }}-config
+        - name: zones
+          configMap:
+            name: {{ include "stateless-dns.fullname" . }}-zones
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

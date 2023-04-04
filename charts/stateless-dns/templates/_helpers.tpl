@@ -38,10 +38,21 @@ Common labels
 */}}
 {{- define "stateless-dns.labels" -}}
 helm.sh/chart: {{ include "stateless-dns.chart" . }}
+{{ include "stateless-dns.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+
+{{/*
+Selector labels
+*/}}
+{{- define "stateless-dns.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "stateless-dns.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: external-dns
 {{- end }}
 
 
