@@ -126,8 +126,7 @@ externalDNS:
   txtWildcardReplacement: "wildcard-"
   managedRecordTypes:
     - A
-    - CNAME
-    - NS
+    - TXT
 
   extraArgs: []
 
