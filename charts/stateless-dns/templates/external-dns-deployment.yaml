@@ -110,8 +110,8 @@ spec:
             - name: "POWERDNS_API_KEY"
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pdns.secret.name" . }}
-                  key: {{ include "pdns.secret.key" . }}
+                  name: {{ include "stateless-dns.secret.name" . }}
+                  key: {{ include "stateless-dns.secret.key" . }}
           resources:
             {{- toYaml .Values.externalDNS.resources | nindent 12 }}
 
@@ -156,8 +156,8 @@ spec:
             - name: "POWERDNS_API_KEY"
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "pdns.secret.name" . }}
-                  key: {{ include "pdns.secret.key" . }}
+                  name: {{ include "stateless-dns.secret.name" . }}
+                  key: {{ include "stateless-dns.secret.key" . }}
           volumeMounts:
             - mountPath: /data
               name: data
@@ -174,10 +174,10 @@ spec:
           emptyDir: {}
         - name: config
           configMap:
-            name: {{ include "stateless-dns.fullname" . }}-config
+            name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "config" ) }}
         - name: zones
           configMap:
-            name: {{ include "stateless-dns.fullname" . }}-zones
+            name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "zones" ) }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:

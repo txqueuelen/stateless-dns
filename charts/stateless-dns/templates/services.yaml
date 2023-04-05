@@ -8,7 +8,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "stateless-dns.fullname" . }}-udp
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "udp" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -32,7 +32,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "stateless-dns.fullname" . }}-tcp
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "tcp" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -56,7 +56,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "stateless-dns.fullname" . }}-http
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "http" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
@@ -80,7 +80,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: {{ include "stateless-dns.fullname" . }}-edns-metrics
+  name: {{ include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "edns-metrics" ) }}
   labels:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
