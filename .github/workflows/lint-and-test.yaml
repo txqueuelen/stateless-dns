@@ -113,10 +113,6 @@ jobs:
             --create-namespace --namespace e2e-staless-dns \
             --wait --timeout 60s
 
-      # In this first iteration, readineess probes may not be reliable.
-      - name: Wait 5 seconds for everything to settle
-        run: sleep 5
-
       # Begin e2e test.
       - name: Testing e2e
         run: |

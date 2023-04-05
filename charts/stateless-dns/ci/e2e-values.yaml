@@ -23,10 +23,7 @@ pdns:
   apiKeySecret:
     create: true
     valuePlain: a-testing-apikey
-  extraArgs:
-    # In case something fails, we are not blind.
-    - --loglevel=7
-    - --log-dns-queries=yes
+
   extraConfig:
     # In case something fails, we are not blind.
     loglevel: "7"

@@ -24,6 +24,12 @@ data:
     webserver-port={{ .Values.service.api.port }}
     webserver-allow-from=0.0.0.0/0
     api=yes
+
+    # PowerDNS by default does not update the SOA serial.
+    # The option above changes that default behaviour to use the format YYYYMMDDSS with the
+    # where SS is the increment change on the day YYYYMMDD.
+    # Possible values: https://doc.powerdns.com/authoritative/dnssec/operational.html#possible-soa-edit-values
+    default-soa-edit=INCEPTION-INCREMENT
     {{- end }}
 
     {{ range $key, $value := .Values.pdns.extraConfig }}
