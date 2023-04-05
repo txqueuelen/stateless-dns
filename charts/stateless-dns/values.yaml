@@ -70,9 +70,6 @@ ingress:
   #      - chart-example.local
 
 externalDNS:
-  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
-  fullnameOverride: ""  # String to override the name of the objects created.
-
   image:
     registry: registry.k8s.io  # Image registry
     repository: external-dns/external-dns  # Image repository
@@ -138,9 +135,6 @@ externalDNS:
   extraArgs: []
 
 pdns:
-  nameOverride: ""  # String to override the name of the objects created (will maintain the release name).
-  fullnameOverride: ""  # String to override the name of the objects created.
-
   image:
     registry: ghcr.io  # Image registry
     repository: txqueuelen/stateless-dns/powerdns  # Image repository

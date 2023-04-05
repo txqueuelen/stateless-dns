@@ -50,6 +50,27 @@ spec:
       {{- else if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
       {{- end }}
+      initContainers:
+        # Populate PowerDNS zones
+        - name: zone-populator
+          image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
+          imagePullPolicy: {{ .Values.pdns.pullPolicy }}
+          {{- with .Values.pdns.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - /usr/local/bin/zone-populator.sh
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /usr/local/etc/pdns.conf
+              name: config
+              subPath: pdns.conf
+            - mountPath: /zones
+              name: zones
+
       containers:
         # external-dns container
         - name: external-dns
@@ -123,10 +144,6 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          command:
-            - /bin/bash
-            - /entrypoint/script
-            - /usr/local/sbin/pdns_server
           args:
             {{- if .Values.service.api.enabled }}
             - --api-key=$(POWERDNS_API_KEY)
@@ -164,8 +181,6 @@ spec:
             - mountPath: /usr/local/etc/pdns.conf
               name: config
               subPath: pdns.conf
-            - mountPath: /zones
-              name: zones
           resources:
             {{- toYaml .Values.pdns.resources | nindent 12 }}
 
