@@ -52,7 +52,7 @@ spec:
       {{- end }}
       initContainers:
         # Populate PowerDNS zones
-        - name: pdns
+        - name: zone-populator
           image: "{{ .Values.pdns.image.registry }}/{{ .Values.pdns.image.repository }}:{{ .Values.pdns.image.tag }}"
           imagePullPolicy: {{ .Values.pdns.pullPolicy }}
           {{- with .Values.pdns.securityContext }}
