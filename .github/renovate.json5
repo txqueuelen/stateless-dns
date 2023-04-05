@@ -12,7 +12,7 @@
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "kubernetes/{{{ project }}}",
       "matchStrings": [
-        " *(?<project>.*) version: (?<currentValue>.*)"
+        " *(?<project>.*)-version: (?<currentValue>.*)"
       ]
     },
     {
