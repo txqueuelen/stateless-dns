@@ -74,9 +74,6 @@ ingress:
         - chart-example.local
 
 externalDNS:
-  nameOverride: ""
-  fullnameOverride: ""
-
   image:
     registry: registry.k8s.io
     repository: external-dns/external-dns
@@ -131,9 +128,6 @@ externalDNS:
   extraArgs: []
 
 pdns:
-  nameOverride: ""
-  fullnameOverride: ""
-
   image:
     registry: ghcr.io
     repository: txqueuelen/stateless-dns/powerdns
