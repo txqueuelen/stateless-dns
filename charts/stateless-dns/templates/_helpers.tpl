@@ -73,7 +73,6 @@ Selector labels
 {{- define "stateless-dns.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "stateless-dns.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: external-dns
 {{- end }}
 
 
