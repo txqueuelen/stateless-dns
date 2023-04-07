@@ -2,11 +2,6 @@ name: Lint and test PR
 
 on: pull_request
 
-# Prevent to consume free CI minutes by not running two workflows in the CI at the same time.
-concurrency:
-  group: pr-testing
-  cancel-in-progress: true
-
 jobs:
   docker-build:
     name: Build Docker image
