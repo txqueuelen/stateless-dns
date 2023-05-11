@@ -1,5 +1,5 @@
 {{- if and .Values.service.api.enabled .Values.ingress.enabled -}}
-{{- $fullName := include "stateless-dns.fullname" . -}}
+{{- $fullName := (include "stateless-dns.fullname.withSuffix" ( dict "context" . "suffix" "http" )) -}}
 {{- $svcPort := .Values.service.api.port -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
