@@ -138,8 +138,8 @@ externalDNS:
 pdns:
   image:
     registry: ghcr.io  # Image registry
-    repository: txqueuelen/stateless-dns/powerdns  # Image repository
-    tag: v4.7.4@sha256:3523f1516f395a9bc82bbb506387b77636eaaa68f2838f09934220992d0ada65  # Image tag
+    repository: txqueuelen/powerdns-docker/powerdns  # Image repository
+    tag: v4.8.2@sha256:cd396946ba05e2902850d3ade952828a97496d91571098ddc7488987f0af1138   # Image tag
     pullPolicy: IfNotPresent  # Image pull policy.
 
   securityContext:
