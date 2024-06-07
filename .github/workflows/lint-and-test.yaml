@@ -44,6 +44,9 @@ jobs:
       next-version: ${{ steps.version.outputs.next-version }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Validate that the markdown is correct
         uses: newrelic/release-toolkit/validate-markdown@v1
       - name: Generate YAML
