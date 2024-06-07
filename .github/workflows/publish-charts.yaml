@@ -1,30 +1,80 @@
-# Publish chart as OCI image to GitHub registry. Version is automatically gathered from the tag name.
-# For this workflow to work, GITHUB_TOKEN needs to be configured with write permissions.
-# Additionally, the repository must be granted access in the package settings.
-
 name: Publish chart
 
 on:
   release:
     types: [ released ]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     name: Publish chart to OCI registry
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Create release-toolkit data file and hydrate it.
+      - name: Generate changelog YAML
+        uses: newrelic/release-toolkit/generate-yaml@v1
+        with:
+          excluded-dirs: .github
+          excluded-files: README.md
+          exit-code: "0"
+      - name: Link dependencies
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        uses: newrelic/release-toolkit/link-dependencies@v1
+        with:
+          dictionary: .github/rt-dictionary.yaml
+
+      # Check if we have something to release and if the release is not blocked.
+      - name: Check if the release is empty
+        id: empty
+        uses: newrelic/release-toolkit/is-empty@v1
+      - name: Check if the release is held
+        id: held
+        uses: newrelic/release-toolkit/is-held@v1
+
+      # Calculate next-version and generate change logs
+      - name: Calculate next version
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        id: version
+        uses: newrelic/release-toolkit/next-version@v1
+      - name: Generate release notes
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        uses: newrelic/release-toolkit/render@v1
+      - name: Update CHANGELOG.md
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        uses: newrelic/release-toolkit/update-markdown@v1
+        with:
+          next-version: ${{ steps.next-version.outputs.version }}
+
+      # Commit to main branch and push changes. Then create a release.
+      - name: Commit and tag release
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        run: |
+          git add CHANGELOG.md
+          git commit -m "[no ci] Automatic ${{ steps.next-version.outputs.next-version }} release"
+          git push
+          gh release create "${{ steps.next-version.outputs.next-version }}" -F CHANGELOG.partial.md
+
+      # Login to GitHub Packages to upload the chart to the OCI repository.
       - name: Helm login
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | \
           helm registry login ghcr.io \
             --username "$GITHUB_REPOSITORY_OWNER" \
             --password-stdin
       - name: Helm package
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
         run: |
-          helm package charts/stateless-dns -u --version "${GITHUB_REF_NAME#v}"
+          helm package charts/stateless-dns -u --version "${{ steps.next-version.outputs.version }}"
       - name: Helm push
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
         run: |
           helm push \
-          "stateless-dns-${GITHUB_REF_NAME#v}.tgz" \
-          "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/charts"
+          "stateless-dns-${{ steps.next-version.outputs.version }}.tgz" \
+          "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/pdns-stateless"

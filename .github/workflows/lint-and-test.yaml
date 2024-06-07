@@ -34,13 +34,52 @@ jobs:
             fi
           done
 
+  changelog-checks:
+    name: Test changelog correctness and get next-version
+    runs-on: ubuntu-latest
+    outputs:
+      is-empty: ${{ steps.empty.outputs.is-empty }}
+      is-held: ${{ steps.held.outputs.is-held }}
+      skip-release: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+      next-version: ${{ steps.version.outputs.next-version }}
+
+    steps:
+      - name: Validate that the markdown is correct
+        uses: newrelic/release-toolkit/validate-markdown@v1
+      - name: Generate YAML
+        uses: newrelic/release-toolkit/generate-yaml@v1
+        with:
+          excluded-dirs: .github
+          excluded-files: README.md
+          exit-code: "0"
+      - name: Check if the release is empty
+        id: empty
+        uses: newrelic/release-toolkit/is-empty@v1
+      - name: Check if the release is held
+        id: held
+        uses: newrelic/release-toolkit/is-held@v1
+
+      - name: Link dependencies
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        uses: newrelic/release-toolkit/link-dependencies@v1
+        with:
+          dictionary: .github/rt-dictionary.yaml
+
+      - name: Calculate next version
+        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        id: version
+        uses: newrelic/release-toolkit/next-version@v1
+
   chart-install:
     name: Installation test for Helm charts
     runs-on: ubuntu-latest
     needs:
-      # This test is expensive so only run it when cheap tests pass:
+      # This test is expensive so only run when cheap tests pass.
       - chart-lint
       - chart-unittest
+      # To test the upgrade path we need the previous and next version.
+      - changelog-checks
+    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -54,6 +93,11 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
+
+      # Change version of the Helm chart to the next one so test upgrade path
+      - name: Set chart version to rt's next-version
+        run: |
+          yq -i '.version = ${{ needs.changelog-checks.outputs.next-version }}' charts/stateless-dns/Chart.yaml
 
       # Test chart installation
       - name: Install helm/chart-testing
