@@ -1,0 +1,8 @@
+# This file is a dictionary used by the [link-dependencies](https://github.com/newrelic/release-toolkit/tree/main/link-dependencies) action.
+# Notice that the implementation uses dep.To.ToString that removes the leading v if present.
+dictionary:
+  # TODO: Unable to link dependency for Power DNS because it uses a weird changelog URL scheme:
+  # https://doc.powerdns.com/authoritative/changelog/4.9.html#change-4.9.1
+  # txqueuelen/powerdns-docker: "https://github.com/txqueuelen/powerdns-docker/releases/tag/{{.To}}"
+
+  external-dns/external-dns: "https://github.com/kubernetes-sigs/external-dns/releases/tag/v{{.To}}"
