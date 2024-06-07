@@ -65,13 +65,13 @@ jobs:
         uses: newrelic/release-toolkit/is-held@v1
 
       - name: Link dependencies
-        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         uses: newrelic/release-toolkit/link-dependencies@v1
         with:
           dictionary: .github/rt-dictionary.yaml
 
       - name: Calculate next version
-        if: ${{ steps.empty.outputs.is-empty == 'true' || steps.held.outputs.is-held == 'true' }}
+        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         id: version
         uses: newrelic/release-toolkit/next-version@v1
 
