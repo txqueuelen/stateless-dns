@@ -25,5 +25,5 @@ Luckily there are only a few 0ver releases from here once we merge all
 dependencies that need to be upgraded and make the last changes before
 creating the v1 release :D
 
-### Enhancements
+### Enhancement
 - Automatic dependency upgrade and release system
