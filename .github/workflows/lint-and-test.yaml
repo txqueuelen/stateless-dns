@@ -12,7 +12,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install helm/chart-testing
-        uses: helm/chart-testing-action@v2.4.0
+        uses: helm/chart-testing-action@v2.6.1
       - name: Lint charts
         run: ct --config .github/ct.yaml lint --all
 
@@ -101,7 +101,7 @@ jobs:
 
       # Test chart installation
       - name: Install helm/chart-testing
-        uses: helm/chart-testing-action@v2.4.0
+        uses: helm/chart-testing-action@v2.6.1
       - name: Test charts' installation path
         run: |
           ct install --all \
