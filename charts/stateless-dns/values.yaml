@@ -73,7 +73,7 @@ externalDNS:
   image:
     registry: registry.k8s.io  # Image registry
     repository: external-dns/external-dns  # Image repository
-    tag: v0.13.4  # Image tag
+    tag: v0.14.2  # Image tag
 
   pullPolicy: IfNotPresent  # Image pull policy.
 
