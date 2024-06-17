@@ -81,10 +81,10 @@ jobs:
       - name: Helm package
         if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         run: |
-          helm package charts/stateless-dns -u --version "${{ steps.next-version.outputs.version }}"
+          helm package charts/stateless-dns -u --version "${{ steps.version.outputs.next-version }}"
       - name: Helm push
         if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         run: |
           helm push \
-          "stateless-dns-${{ steps.next-version.outputs.version }}.tgz" \
+          "stateless-dns-${{ steps.version.outputs.next-version }}.tgz" \
           "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/pdns-stateless"
