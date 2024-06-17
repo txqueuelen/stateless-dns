@@ -51,7 +51,7 @@ jobs:
         if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         uses: newrelic/release-toolkit/update-markdown@v1
         with:
-          next-version: ${{ steps.next-version.outputs.version }}
+          version: ${{ steps.version.outputs.next-version }}
 
       # Commit to main branch and push changes. Then create a release.
       - name: Commit and tag release
