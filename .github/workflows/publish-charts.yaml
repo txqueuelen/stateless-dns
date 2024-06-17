@@ -9,6 +9,10 @@ permissions:
   contents: write
   packages: write
 
+env:
+  COMMITTER_NAME: "txqueuelen release bot"
+  COMMITTER_EMAIL: dev@kangmak.es
+
 jobs:
   release:
     name: Publish chart to OCI registry
@@ -56,11 +60,15 @@ jobs:
       # Commit to main branch and push changes. Then create a release.
       - name: Commit and tag release
         if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add CHANGELOG.md
-          git commit -m "[no ci] Automatic ${{ steps.next-version.outputs.next-version }} release"
+          git config user.name '${{ env.COMMITTER_NAME }}'
+          git config user.email '${{ env.COMMITTER_EMAIL }}'
+          git commit -m "[no ci] Automatic ${{ steps.version.outputs.next-version }} release"
           git push
-          gh release create "${{ steps.next-version.outputs.next-version }}" -F CHANGELOG.partial.md
+          gh release create "${{ steps.version.outputs.next-version }}" -F CHANGELOG.partial.md
 
       # Login to GitHub Packages to upload the chart to the OCI repository.
       - name: Helm login
