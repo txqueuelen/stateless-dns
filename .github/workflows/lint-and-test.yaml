@@ -1,6 +1,11 @@
 name: Lint and test PR
 
-on: pull_request
+on:
+  push:
+    branches:
+      - renovate/**
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   chart-unittest:

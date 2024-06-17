@@ -1,8 +1,9 @@
 name: Publish chart
 
 on:
-  release:
-    types: [ released ]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
