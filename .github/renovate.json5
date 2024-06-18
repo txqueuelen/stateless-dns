@@ -1,7 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:base",
+
+    // Merge all related with workflows, actions, etc...
+    "github>txqueuelen/.github//renovate/automerge-workflows-all.json",
   ],
 
   // Using the kubernetes manager with all yaml files.
