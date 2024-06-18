@@ -8,24 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  chart-unittest:
-    name: Unit test Helm charts
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install helm-unittest plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest
-      - name: Run unit tests
-        run: |
-          for chart in charts/*; do
-            if [ -d "$chart/tests/" ]; then
-              helm unittest $chart -3
-            else
-              echo "::warning file=$chart,title=Skipping unit test for $chart::$chart does not have a tests/ folder"
-            fi
-          done
-
   changelog-checks:
     name: Test changelog correctness and get next-version
     runs-on: ubuntu-latest
@@ -67,12 +49,33 @@ jobs:
         id: version
         uses: newrelic/release-toolkit/next-version@v1
 
+  chart-unittest:
+    name: Unit test Helm charts
+    runs-on: ubuntu-latest
+    needs:
+      - changelog-checks
+    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+      - name: Run unit tests
+        run: |
+          for chart in charts/*; do
+            if [ -d "$chart/tests/" ]; then
+              helm unittest $chart -3
+            else
+              echo "::warning file=$chart,title=Skipping unit test for $chart::$chart does not have a tests/ folder"
+            fi
+          done
+
   chart-lint:
     name: Lint Helm charts
     runs-on: ubuntu-latest
     needs:
-      # Lint charts using the next version.
       - changelog-checks
+    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
