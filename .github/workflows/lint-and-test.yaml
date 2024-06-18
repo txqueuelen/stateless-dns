@@ -45,16 +45,12 @@ jobs:
           dictionary: .github/rt-dictionary.yaml
 
       - name: Calculate next version
-        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
         id: version
         uses: newrelic/release-toolkit/next-version@v1
 
   chart-unittest:
     name: Unit test Helm charts
     runs-on: ubuntu-latest
-    needs:
-      - changelog-checks
-    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,8 +70,8 @@ jobs:
     name: Lint Helm charts
     runs-on: ubuntu-latest
     needs:
+      # Lint charts using the next version.
       - changelog-checks
-    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -99,7 +95,6 @@ jobs:
       - chart-unittest
       # To test the upgrade path we need the previous and next version.
       - changelog-checks
-    if: ${{ needs.changelog-checks.outputs.skip-release != 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
