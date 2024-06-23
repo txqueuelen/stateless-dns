@@ -1,4 +1,4 @@
-name: Publish chart
+name: Create chart release
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 env:
   COMMITTER_NAME: "txqueuelen release bot"
@@ -15,7 +14,7 @@ env:
 
 jobs:
   release:
-    name: Publish chart to OCI registry
+    name: Create chart release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,6 +29,7 @@ jobs:
           excluded-dirs: .github
           excluded-files: README.md
           exit-code: "0"
+
       # Check if we have something to release and if the release is not blocked.
       - name: Check if the release is empty
         id: empty
@@ -69,22 +69,3 @@ jobs:
           git commit -m "[no ci] Automatic ${{ steps.version.outputs.next-version }} release"
           git push
           gh release create "${{ steps.version.outputs.next-version }}" -F CHANGELOG.partial.md
-
-      # Login to GitHub Packages to upload the chart to the OCI repository.
-      - name: Helm login
-        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-          helm registry login ghcr.io \
-            --username "$GITHUB_REPOSITORY_OWNER" \
-            --password-stdin
-      - name: Helm package
-        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
-        run: |
-          helm package charts/stateless-dns -u --version "${{ steps.version.outputs.next-version }}"
-      - name: Helm push
-        if: ${{ steps.empty.outputs.is-empty == 'false' && steps.held.outputs.is-held == 'false' }}
-        run: |
-          helm push \
-          "stateless-dns-${{ steps.version.outputs.next-version }}.tgz" \
-          "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/pdns-stateless"
