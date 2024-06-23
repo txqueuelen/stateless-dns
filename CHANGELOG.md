@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-### Enhancement
+## v0.5.0 - 2024-06-23
+
+### 🚀 Enhancements
 - Split release process so we can create off-tree emergency releases
 
 ## v0.4.1 - 2024-06-18
