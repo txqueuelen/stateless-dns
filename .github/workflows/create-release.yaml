@@ -66,6 +66,6 @@ jobs:
           git add CHANGELOG.md
           git config user.name '${{ env.COMMITTER_NAME }}'
           git config user.email '${{ env.COMMITTER_EMAIL }}'
-          git commit -m "[no ci] Automatic ${{ steps.version.outputs.next-version }} release"
+          git commit -m "Automatic ${{ steps.version.outputs.next-version }} release"
           git push
           gh release create "${{ steps.version.outputs.next-version }}" -F CHANGELOG.partial.md
