@@ -1,0 +1,30 @@
+name: Publish chart
+
+on:
+  release:
+    types:
+      - released
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish chart to OCI registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Helm login
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          helm registry login ghcr.io \
+            --username "$GITHUB_REPOSITORY_OWNER" \
+            --password-stdin
+      - name: Helm package
+        run: |
+          helm package charts/stateless-dns -u --version "${GITHUB_REF_NAME#v}"
+      - name: Helm push
+        run: |
+          helm push \
+          "stateless-dns-${GITHUB_REF_NAME#v}.tgz" \
+          "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/pdns-stateless"
