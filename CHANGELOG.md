@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Enhancement
+- Upgrade external-dns to 0.14.2
+
+### Note
+We are upgrading changing the bare minimum to make it work. We still have to re-read
+all the changelog and add all new features to this chart (or migrate to the one
+upstream if we can).
+
 ## v0.4.1 - 2024-06-18
 
 ### ⛓️ Dependencies
