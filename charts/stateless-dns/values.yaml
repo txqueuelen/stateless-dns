@@ -73,7 +73,7 @@ externalDNS:
   image:
     registry: registry.k8s.io  # Image registry
     repository: external-dns/external-dns  # Image repository
-    tag: v0.13.4  # Image tag
+    tag: v0.14.2  # Image tag
 
   pullPolicy: IfNotPresent  # Image pull policy.
 
@@ -131,6 +131,8 @@ externalDNS:
   # During the testing we were able to create only "A" and "TXT" records with this setup.
   managedRecordTypes:  # Entry types that external-dns will be able to create in the provider. NS and MX entries are unsupported, for more information read the full explanation in the `values.yaml`.
     - A
+    - AAAA
+    - CNAME
 
   # Additional arguments to pass to the `external-dns` container.
   extraArgs: []
