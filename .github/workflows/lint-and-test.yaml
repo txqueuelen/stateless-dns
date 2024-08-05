@@ -104,7 +104,7 @@ jobs:
         uses: manusa/actions-setup-minikube@v2.11.0
         with:
           minikube version: v1.33.1
-          kubernetes version: v1.30.2
+          kubernetes version: v1.30.3
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
