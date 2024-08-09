@@ -13,6 +13,9 @@ metadata:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.dnsUdp.type }}
+  {{- with .Values.service.dnsUdp.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . | quote }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.dnsUdp.port }}
       targetPort: dns-udp
@@ -37,6 +40,9 @@ metadata:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.dnsTcp.type }}
+  {{- with .Values.service.dnsTcp.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . | quote }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.dnsTcp.port }}
       targetPort: dns-tcp
@@ -61,6 +67,9 @@ metadata:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.api.type }}
+  {{- with .Values.service.api.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . | quote }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.api.port }}
       targetPort: http
@@ -85,6 +94,9 @@ metadata:
     {{- include "stateless-dns.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.externalDNSMetrics.type }}
+  {{- with .Values.service.externalDNSMetrics.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . | quote }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.externalDNSMetrics.port }}
       targetPort: metrics-http
