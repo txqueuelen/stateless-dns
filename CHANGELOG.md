@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Enhancement
+- Allow specifying `ipFamilyPolicy` on all services.
+
 ## v0.5.1 - 2024-08-09
 
 ### ⛓️ Dependencies
