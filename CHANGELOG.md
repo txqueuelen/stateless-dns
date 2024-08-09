@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-### Enhancement
+## v0.6.0 - 2024-08-09
+
+### 🚀 Enhancements
 - Allow specifying `ipFamilyPolicy` on all services.
 
 ## v0.5.1 - 2024-08-09
