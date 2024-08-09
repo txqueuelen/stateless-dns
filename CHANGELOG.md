@@ -6,6 +6,11 @@
 
 - Allow specifying `ipFamilyPolicy` on all services.
 
+## v0.5.1 - 2024-08-09
+
+### ⛓️ Dependencies
+- Updated ghcr.io/txqueuelen/powerdns-docker/powerdns:v4.9.1 docker digest to fe49318
+
 ## v0.5.0 - 2024-07-08
 
 ### Note
