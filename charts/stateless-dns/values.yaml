@@ -32,23 +32,28 @@ service:
   api:
     enabled: true  # Specifies whether a service that points to the http port of pdns http API should be created. It is separated from the other services so the user can select service type freely from the others needed.
     type: ClusterIP  # Service type.
+    # ipFamilyPolicy can be defined as below. If ommited, it will not be rendered in yaml.
+    # ipFamilyPolicy: SingleStack
     port: 80  # Service port.
     annotations: {}  # Annotations to add to the service.
 
   dnsUdp:
     enabled: true  # Specifies whether a service that points to the UDP port of pdns should be created. It is separated from TCP DNS port because of limitations of Kubernetes. You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time. Two services should workaround this limitation.
+    # ipFamilyPolicy: SingleStack
     type: ClusterIP  # Service type.
     port: 53  # Service port.
     annotations: {}  # Annotations to add to the service.
 
   dnsTcp:
     enabled: true  # Specifies whether a service that points to the TCP port of pdns should be created. It is separated from UDP DNS port because of limitations of Kubernetes. You cannot create a service with type LoadBalancer that exposes UDP and TCP ports at the same time. Two services should workaround this limitation.
+    # ipFamilyPolicy: SingleStack
     type: ClusterIP  # Service type.
     port: 53  # Service port.
     annotations: {}  # Annotations to add to the service.
 
   externalDNSMetrics:
     enabled: true  # Specifies whether a service that points to the http port of external-dns prometheus metrics.
+    # ipFamilyPolicy: SingleStack
     type: ClusterIP  # Service type.
     port: 80  # Service port.
     annotations: {}  # Annotations to add to the service.
