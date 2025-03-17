@@ -3,10 +3,10 @@ name: stateless-dns
 description: A Helm chart to integrate external-dns and powerdns so they work stateless
 
 maintainers:
-- name: kang-makes
-  url: https://github.com/kang-makes
-- name: roobre
-  url: https://github.com/roobre
+  - name: Kang
+    url: https://github.com/kilokang
+  - name: Nadia
+    url: https://github.com/nadiamoe
 
 type: application
 
