@@ -146,7 +146,7 @@ pdns:
   image:
     registry: ghcr.io  # Image registry
     repository: txqueuelen/powerdns-docker/powerdns  # Image repository
-    tag: v4.9.7@sha256:92cf13a30748210c430363befc69895faacf85eb2c84152decc093d46beaa463   # Image tag
+    tag: v4.9.7@sha256:f49d5efca40d20ab54eb534e6ab27d41ce040e143a221d92f73a2018f6c499ad   # Image tag
     pullPolicy: IfNotPresent  # Image pull policy.
 
   securityContext:
