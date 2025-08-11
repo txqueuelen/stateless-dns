@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.6.2 - 2025-08-11
+
+### ⛓️ Dependencies
+- Updated ghcr.io/txqueuelen/powerdns-docker/powerdns to v4.9.7
+
 ## v0.6.1 - 2025-04-11
 
 ### ⛓️ Dependencies
