@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.6.3 - 2025-08-12
+
+### ⛓️ Dependencies
+- Updated registry.k8s.io/external-dns/external-dns to v0.18.0 - [Changelog 🔗](https://github.com/kubernetes-sigs/external-dns/releases/tag/v0.18.0)
+- Updated ghcr.io/txqueuelen/powerdns-docker/powerdns to v4.9.8
+
 ## v0.6.2 - 2025-08-11
 
 ### ⛓️ Dependencies
