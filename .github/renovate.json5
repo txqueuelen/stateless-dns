@@ -9,7 +9,7 @@
 
   // Using the kubernetes manager with all yaml files.
   "kubernetes": {
-    "fileMatch": [ "\\.yaml$" ]
+    "managerFilePatterns": [ "/\\.ya?ml$/" ]
   },
 
   // Update minikube action parameters.
@@ -35,6 +35,16 @@
       ],
       "groupName": "Kubernetes related testing dependencies",
       "groupSlug": "kubernetes-ci"
+    },
+    {
+      "matchPackageNames": [
+        "powerdns",
+        "external-dns"
+      ],
+      "matchUpdateTypes": [ "minor" ],
+      "automerge": true,
+      "automergeType": "branch",
+      "pruneBranchAfterAutomerge": true,
     }
   ]
 }
