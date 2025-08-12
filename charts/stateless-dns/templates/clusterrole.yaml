@@ -17,7 +17,15 @@ rules:
 {{- $hasAmbassadorHost      := has "ambassador-host"      .Values.externalDNS.sources }}
 {{- $hasContourIngressroute := has "contour-ingressroute" .Values.externalDNS.sources }}
 {{- $hasCRD                 := has "crd"                  .Values.externalDNS.sources }}
+{{- $hasGatewayHTTPRoute    := has "gateway-httproute"    .Values.externalDNS.sources }}
+{{- $hasGatewayGRPCRoute    := has "gateway-grpcroute"    .Values.externalDNS.sources }}
+{{- $hasGatewayTLSRoute     := has "gateway-tlsroute"     .Values.externalDNS.sources }}
+{{- $hasGatewayTCPRoute     := has "gateway-tcproute"     .Values.externalDNS.sources }}
+{{- $hasGatewayUDPRoute     := has "gateway-udproute"     .Values.externalDNS.sources }}
 {{- $hasKongTCPIngress      := has "kong-tcpingress"      .Values.externalDNS.sources }}
+{{- $hasTraefikProxy        := has "traefik-proxy"        .Values.externalDNS.sources }}
+{{- $hasF5VirtualServer     := has "f5-virtualserver"     .Values.externalDNS.sources }}
+{{- $hasF5TransportServer   := has "f5-transportserver"   .Values.externalDNS.sources }}
 
 
 {{- if or $hasNode $hasPod $hasService $hasContourHTTPProxy $hasGlooProxy $hasOpenshiftRoute $hasSkipperRoutegroup }}
@@ -33,6 +41,9 @@ rules:
 {{- if or $hasService $hasContourHTTPProxy $hasGlooProxy $hasIstioGateway $hasIstioVirtualservice $hasOpenshiftRoute $hasSkipperRoutegroup }}
   - apiGroups: [""]
     resources: ["services","endpoints"]
+    verbs: ["get","watch","list"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
     verbs: ["get","watch","list"]
 {{- end }}
 {{- if or $hasIngress $hasContourHTTPProxy $hasOpenshiftRoute $hasSkipperRoutegroup }}
@@ -73,6 +84,39 @@ rules:
     resources: ["dnsendpoints/status"]
     verbs: ["*"]
 {{- end }}
+{{- if or $hasGatewayHTTPRoute $hasGatewayGRPCRoute $hasGatewayTLSRoute $hasGatewayTCPRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gateways"]
+    verbs: ["get","watch","list"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasGatewayHTTPRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasGatewayGRPCRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["grpcroutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasGatewayTLSRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["tlsroutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasGatewayTCPRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["tcproutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
+{{- if $hasGatewayUDPRoute }}
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["udproutes"]
+    verbs: ["get","watch","list"]
+{{- end }}
 {{- if $hasGlooProxy }}
   - apiGroups: ["gloo.solo.io","gateway.solo.io"]
     resources: ["proxies","virtualservices"]
@@ -88,6 +132,11 @@ rules:
     resources: ["routes"]
     verbs: ["get","watch","list"]
 {{- end }}
+{{- if $hasTraefikProxy }}
+  - apiGroups: ["traefik.containo.us", "traefik.io"]
+    resources: ["ingressroutes", "ingressroutetcps", "ingressrouteudps"]
+    verbs: ["get","watch","list"]
+{{- end }}
 {{- if $hasSkipperRoutegroup }}
   - apiGroups: ["zalando.org"]
     resources: ["routegroups"]
@@ -96,4 +145,10 @@ rules:
     resources: ["routegroups/status"]
     verbs: ["patch","update"]
 {{- end }}
+{{- if or $hasF5VirtualServer $hasF5TransportServer }}
+  - apiGroups: ["cis.f5.com"]
+    resources: ["virtualservers", "transportservers"]
+    verbs: ["get","watch","list"]
+{{- end }}
+
 {{- end }}
