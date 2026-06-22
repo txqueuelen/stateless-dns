@@ -1,50 +1,46 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base",
-
-    // Merge all related with workflows, actions, etc...
-    "github>txqueuelen/.github//renovate/automerge-workflows-all.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    'github>txqueuelen/.github//renovate/automerge-workflows-all.json',
   ],
-
-  // Using the kubernetes manager with all yaml files.
-  "kubernetes": {
-    "managerFilePatterns": [ "/\\.ya?ml$/" ]
+  kubernetes: {
+    managerFilePatterns: [
+      '/\\.ya?ml$/',
+    ],
   },
-
-  // Update minikube action parameters.
-  "regexManagers": [
+  customManagers: [
     {
-      "fileMatch": [ "^.github/workflows/lint-and-test.yaml$" ],
-      "datasourceTemplate": "github-tags",
-      "depNameTemplate": "kubernetes/{{{ project }}}",
-      "matchStrings": [
-        " *(?<project>.*) version: (?<currentValue>.*)"
-      ]
-    }
-  ],
-
-  // Group all kubernetes/minikube related updates in the same PR.
-  // Kubernetes upgrade could break minikube. And the update/fix of
-  // minukube should be tested with the new version of Kubernetes.
-  // It make sense that the PR is the same.
-  "packageRules": [
-    {
-      "matchDepPatterns": [
-        "^kubernetes/.*"
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^.github/workflows/lint-and-test.yaml$/',
       ],
-      "groupName": "Kubernetes related testing dependencies",
-      "groupSlug": "kubernetes-ci"
+      datasourceTemplate: 'github-tags',
+      depNameTemplate: 'kubernetes/{{{ project }}}',
+      matchStrings: [
+        ' *(?<project>.*) version: (?<currentValue>.*)',
+      ],
+    },
+  ],
+  packageRules: [
+    {
+      groupName: 'Kubernetes related testing dependencies',
+      groupSlug: 'kubernetes-ci',
+      matchDepNames: [
+        '/^kubernetes/.*/',
+      ],
     },
     {
-      "matchPackageNames": [
-        "powerdns",
-        "external-dns"
+      matchPackageNames: [
+        'powerdns',
+        'external-dns',
       ],
-      "matchUpdateTypes": [ "minor" ],
-      "automerge": true,
-      "automergeType": "branch",
-      "pruneBranchAfterAutomerge": true,
-    }
-  ]
+      matchUpdateTypes: [
+        'minor',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      pruneBranchAfterAutomerge: true,
+    },
+  ],
 }
